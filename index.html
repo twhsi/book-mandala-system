@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>曼陀羅專案管理系統</title>
+    <title>曼陀羅專案管理系統 v3.4</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
@@ -14,6 +14,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: #f8fafc;
             overflow: hidden;
+            height: 100vh;
         }
 
         .main-container {
@@ -23,7 +24,7 @@
         }
 
         .sidebar {
-            width: 160px;
+            width: 140px;
             background: #ffffff;
             border-right: 1px solid #e5e7eb;
             overflow-y: auto;
@@ -41,30 +42,33 @@
             display: flex;
             flex-direction: column;
             min-width: 0;
+            height: 100vh;
         }
 
         .toolbar {
-            height: 32px;
+            height: 28px;
             background: #ffffff;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
-            padding: 0 8px;
-            gap: 4px;
+            padding: 0 6px;
+            gap: 3px;
             flex-shrink: 0;
+            flex-wrap: wrap;
         }
 
         .toolbar button {
-            height: 24px;
-            padding: 0 8px;
-            font-size: 11px;
+            height: 20px;
+            padding: 0 6px;
+            font-size: 10px;
             border: 1px solid #d1d5db;
             background: #f9fafb;
-            border-radius: 4px;
+            border-radius: 3px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
+            white-space: nowrap;
         }
 
         .toolbar button:hover {
@@ -85,23 +89,31 @@
 
         .main-content {
             flex: 1;
-            padding: 8px;
+            padding: 6px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         .project-header {
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            height: 20px;
+            flex-shrink: 0;
         }
 
         .project-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             color: #1f2937;
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+            color: #6b7280;
         }
 
         .mandala-container {
@@ -110,6 +122,7 @@
             justify-content: center;
             align-items: center;
             min-height: 0;
+            padding: 4px;
         }
 
         .mandala-grid {
@@ -117,10 +130,12 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 2px;
             aspect-ratio: 1;
-            max-width: 100%;
-            max-height: 100%;
+            width: 100%;
+            height: 100%;
+            max-width: min(calc(100vh - 80px), calc(100vw - 160px));
+            max-height: calc(100vh - 80px);
             background: #d1d5db;
-            border-radius: 8px;
+            border-radius: 6px;
             padding: 2px;
         }
 
@@ -131,14 +146,27 @@
             flex-direction: column;
             padding: 4px;
             min-height: 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
         }
 
-        .grid-cell.center {
+        .grid-cell:hover:not(.center) {
             background: #e5e7eb;
         }
 
+        .grid-cell.center {
+            background: #dbeafe;
+            cursor: default;
+        }
+
+        .grid-cell.active-layer {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+        }
+
         .cell-label {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
             color: #374151;
             margin-bottom: 2px;
@@ -151,36 +179,37 @@
             border: none;
             outline: none;
             background: transparent;
-            font-size: 12px;
+            font-size: 11px;
             resize: none;
             width: 100%;
             min-height: 0;
+            line-height: 1.2;
         }
 
         .project-list {
-            padding: 8px;
+            padding: 6px;
         }
 
         .project-group {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .group-title {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             color: #374151;
-            margin-bottom: 4px;
-            padding: 4px 8px;
+            margin-bottom: 3px;
+            padding: 3px 6px;
             background: #f3f4f6;
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         .project-item {
-            padding: 4px 8px;
-            font-size: 11px;
+            padding: 3px 6px;
+            font-size: 10px;
             color: #6b7280;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 3px;
             margin-bottom: 1px;
         }
 
@@ -193,36 +222,11 @@
             color: #1d4ed8;
         }
 
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 10px;
-            color: #6b7280;
-        }
-
-        .toggle-sidebar {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            z-index: 10;
-            width: 20px;
-            height: 20px;
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-        }
-
         .sync-status {
             display: flex;
             align-items: center;
-            gap: 4px;
-            font-size: 10px;
+            gap: 3px;
+            font-size: 9px;
             margin-left: auto;
         }
 
@@ -231,34 +235,21 @@
         .sync-status.error { color: #dc2626; }
         .sync-status.offline { color: #6b7280; }
 
-        /* 響應式設計 */
-        @media (max-width: 800px) {
-            .sidebar {
-                width: 140px;
-            }
-            .mandala-grid {
-                max-width: 90%;
-                max-height: 90%;
-            }
-            .cell-content {
-                font-size: 11px;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .sidebar.collapsed {
-                width: 0;
-            }
-            .mandala-grid {
-                max-width: 95%;
-                max-height: 85%;
-            }
-            .toolbar {
-                flex-wrap: wrap;
-                height: auto;
-                min-height: 32px;
-                padding: 4px;
-            }
+        .toggle-sidebar {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            z-index: 10;
+            width: 18px;
+            height: 18px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
         }
 
         .modal {
@@ -318,13 +309,78 @@
             border-radius: 4px;
             font-size: 12px;
         }
+
+        .form-checkbox {
+            margin-right: 8px;
+        }
+
+        /* 子層格子樣式 */
+        .grid-cell.sub-layer {
+            background: #fef3c7;
+        }
+
+        .grid-cell.sub-center {
+            background: #a7f3d0;
+            cursor: pointer;
+        }
+
+        .grid-cell.sub-center:hover {
+            background: #86efac;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 120px;
+            }
+            .mandala-grid {
+                max-width: calc(100vw - 140px);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .sidebar.collapsed {
+                width: 0;
+            }
+            .mandala-grid {
+                max-width: calc(100vw - 20px);
+            }
+            .toolbar {
+                height: auto;
+                min-height: 28px;
+                padding: 3px;
+            }
+            .toolbar button {
+                font-size: 9px;
+                height: 18px;
+                padding: 0 4px;
+            }
+        }
+
+        /* 確保完整顯示 */
+        @media (max-height: 600px) {
+            .toolbar {
+                height: 24px;
+            }
+            .toolbar button {
+                height: 18px;
+                font-size: 9px;
+            }
+            .project-header {
+                height: 16px;
+                margin-bottom: 2px;
+            }
+            .main-content {
+                padding: 4px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="main-container">
         <div class="sidebar" id="sidebar">
             <div class="project-list">
-                <button class="w-full mb-2 text-xs bg-blue-500 text-white p-2 rounded" onclick="showGitHubModal()">
+                <button class="w-full mb-2 text-xs bg-blue-500 text-white p-1 rounded text-center" onclick="showGitHubModal()">
                     <i class="fas fa-cloud"></i> 雲端設定
                 </button>
                 
@@ -380,31 +436,51 @@
                     <i class="fas fa-bars"></i>
                 </button>
                 
-                <button class="primary" onclick="saveData()">
+                <button class="primary" onclick="saveLocal()">
                     <i class="fas fa-save"></i> 儲存
                 </button>
                 
-                <button onclick="loadData()">
-                    <i class="fas fa-download"></i> 回覆
+                <button onclick="loadLocal()">
+                    <i class="fas fa-download"></i> 載入
                 </button>
                 
-                <button onclick="exportOPML()">
-                    <i class="fas fa-file-export"></i> 匯出
-                </button>
-                
-                <button onclick="importOPML()">
+                <button onclick="importJSONFile()">
                     <i class="fas fa-file-import"></i> 匯入
                 </button>
                 
-                <button class="danger" onclick="clearCurrentLayer()">
-                    <i class="fas fa-eraser"></i> 清除層
+                <button onclick="exportJSON()">
+                    <i class="fas fa-file-export"></i> 匯出
                 </button>
                 
-                <button class="danger" onclick="clearAllData()">
+                <button onclick="uploadGist()">
+                    <i class="fas fa-cloud-upload-alt"></i> 上傳
+                </button>
+                
+                <button onclick="downloadGist()">
+                    <i class="fas fa-cloud-download-alt"></i> 下載
+                </button>
+                
+                <button onclick="shareGist()">
+                    <i class="fas fa-share"></i> 分享
+                </button>
+                
+                <button onclick="exportOPML()">
+                    <i class="fas fa-file-code"></i> OPML匯出
+                </button>
+                
+                <button onclick="importOPML()">
+                    <i class="fas fa-file-upload"></i> OPML匯入
+                </button>
+                
+                <button class="danger" onclick="clearAH()">
+                    <i class="fas fa-eraser"></i> 清除A-H
+                </button>
+                
+                <button class="danger" onclick="clearAll()">
                     <i class="fas fa-trash"></i> 清除全部
                 </button>
 
-                <div class="sync-status" id="syncStatus">
+                <div class="sync-status offline" id="syncStatus">
                     <i class="fas fa-circle"></i>
                     <span>離線</span>
                 </div>
@@ -413,45 +489,47 @@
             <div class="main-content">
                 <div class="project-header">
                     <div class="project-title" id="projectTitle">選擇專案開始編輯</div>
+                    <div class="breadcrumb" id="breadcrumb">主層</div>
                 </div>
 
                 <div class="mandala-container">
                     <div class="mandala-grid" id="mandalaGrid">
-                        <div class="grid-cell" data-position="F">
+                        <!-- 主層：F-C-G / B-中心-D / E-A-H -->
+                        <div class="grid-cell" data-position="F" onclick="enterLayer('F')">
                             <div class="cell-label">F</div>
-                            <textarea class="cell-content" placeholder="輸入內容..." data-cell="F"></textarea>
+                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="F"></textarea>
                         </div>
-                        <div class="grid-cell" data-position="C">
+                        <div class="grid-cell" data-position="C" onclick="enterLayer('C')">
                             <div class="cell-label">C</div>
-                            <textarea class="cell-content" placeholder="輸入內容..." data-cell="C"></textarea>
+                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="C"></textarea>
                         </div>
-                        <div class="grid-cell" data-position="G">
+                        <div class="grid-cell" data-position="G" onclick="enterLayer('G')">
                             <div class="cell-label">G</div>
-                            <textarea class="cell-content" placeholder="輸入內容..." data-cell="G"></textarea>
+                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="G"></textarea>
                         </div>
-                        <div class="grid-cell" data-position="B">
+                        <div class="grid-cell" data-position="B" onclick="enterLayer('B')">
                             <div class="cell-label">B</div>
-                            <textarea class="cell-content" placeholder="輸入內容..." data-cell="B"></textarea>
+                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="B"></textarea>
                         </div>
                         <div class="grid-cell center" data-position="CENTER">
                             <div class="cell-label">中心</div>
-                            <textarea class="cell-content" placeholder="主題中心..." data-cell="CENTER"></textarea>
+                            <textarea class="cell-content" placeholder="專案核心主題..." data-cell="CENTER"></textarea>
                         </div>
-                        <div class="grid-cell" data-position="D">
+                        <div class="grid-cell" data-position="D" onclick="enterLayer('D')">
                             <div class="cell-label">D</div>
-                            <textarea class="cell-content" placeholder="輸入內容..." data-cell="D"></textarea>
+                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="D"></textarea>
                         </div>
-                        <div class="grid-cell" data-position="E">
+                        <div class="grid-cell" data-position="E" onclick="enterLayer('E')">
                             <div class="cell-label">E</div>
-                            <textarea class="cell-content" placeholder="輸入內容..." data-cell="E"></textarea>
+                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="E"></textarea>
                         </div>
-                        <div class="grid-cell" data-position="A">
+                        <div class="grid-cell" data-position="A" onclick="enterLayer('A')">
                             <div class="cell-label">A</div>
-                            <textarea class="cell-content" placeholder="輸入內容..." data-cell="A"></textarea>
+                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="A"></textarea>
                         </div>
-                        <div class="grid-cell" data-position="H">
+                        <div class="grid-cell" data-position="H" onclick="enterLayer('H')">
                             <div class="cell-label">H</div>
-                            <textarea class="cell-content" placeholder="輸入內容..." data-cell="H"></textarea>
+                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="H"></textarea>
                         </div>
                     </div>
                 </div>
@@ -471,6 +549,22 @@
                         需要 gist 權限，用於雲端儲存同步
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Gist ID (可選)</label>
+                    <input type="text" class="form-input" id="gistId" placeholder="留空將建立新的 Gist">
+                    <div style="font-size: 10px; color: #6b7280; margin-top: 4px;">
+                        用於跨瀏覽器同步，可手動輸入已存在的 Gist ID
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" class="form-checkbox" id="noteModeToggle">
+                        <span class="form-label" style="display: inline;">啟用筆記模式</span>
+                    </label>
+                    <div style="font-size: 10px; color: #6b7280; margin-top: 4px;">
+                        Enter鍵自動加前綴，Shift+Enter純換行，Ctrl/Cmd+;插入日期
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button onclick="closeGitHubModal()">取消</button>
@@ -479,248 +573,406 @@
         </div>
     </div>
 
-    <!-- 匯入檔案 -->
-    <input type="file" id="importFile" accept=".opml,.xml" style="display: none;" onchange="handleImportFile(this)">
+    <!-- 檔案輸入 -->
+    <input type="file" id="importJSONInput" accept=".json" style="display: none;" onchange="handleJSONImport(this)">
+    <input type="file" id="importOPMLInput" accept=".opml,.xml" style="display: none;" onchange="handleOPMLImport(this)">
 
     <script>
         // 全域變數
-        let currentProject = null;
-        let projectData = {};
-        let githubToken = localStorage.getItem('github_token') || '';
-        let sidebarCollapsed = false;
+        let app = {
+            data: null,
+            currentProject: '2.6.1',
+            currentLayer: 'main', // 'main' 或 'A', 'B', 'C'...
+            gistId: localStorage.getItem('gist_id') || null,
+            token: localStorage.getItem('github_token') || '',
+            noteMode: localStorage.getItem('note_mode') === 'true'
+        };
 
-        // 初始化專案資料結構
-        function initializeProjectData() {
-            const series = ['2.6', '2.7', '2.8', '2.9'];
-            const types = ['1', '2', '3', '4', '5', '6', '7'];
-            const typeNames = ['目標', '阻礙', '努力', '結果', '意外', '轉彎', '結局'];
+        // 資料結構初始化
+        function createEmptyData() {
+            const series = ['2.6','2.7','2.8','2.9'];
+            const types = ['1','2','3','4','5','6','7'];
+            const typeNames = ['目標','阻礙','努力','結果','意外','轉彎','結局'];
+            const projects = {};
             
             series.forEach(s => {
                 types.forEach((t, index) => {
-                    const projectId = `${s}.${t}`;
-                    if (!projectData[projectId]) {
-                        projectData[projectId] = {
-                            id: projectId,
-                            name: `${projectId} ${typeNames[index]}`,
-                            data: {
-                                CENTER: '',
-                                F: '', C: '', G: '',
-                                B: '', D: '',
-                                E: '', A: '', H: ''
-                            }
-                        };
-                    }
+                    const id = `${s}.${t}`;
+                    projects[id] = {
+                        title: `${id} ${typeNames[index]}`,
+                        cells: {
+                            CENTER: '',
+                            F: '', C: '', G: '', B: '', D: '', E: '', A: '', H: '',
+                            // 子層 F1-F8, C1-C8, G1-G8, B1-B8, D1-D8, E1-E8, A1-A8, H1-H8
+                            F1: '', F2: '', F3: '', F4: '', F5: '', F6: '', F7: '', F8: '',
+                            C1: '', C2: '', C3: '', C4: '', C5: '', C6: '', C7: '', C8: '',
+                            G1: '', G2: '', G3: '', G4: '', G5: '', G6: '', G7: '', G8: '',
+                            B1: '', B2: '', B3: '', B4: '', B5: '', B6: '', B7: '', B8: '',
+                            D1: '', D2: '', D3: '', D4: '', D5: '', D6: '', D7: '', D8: '',
+                            E1: '', E2: '', E3: '', E4: '', E5: '', E6: '', E7: '', E8: '',
+                            A1: '', A2: '', A3: '', A4: '', A5: '', A6: '', A7: '', A8: '',
+                            H1: '', H2: '', H3: '', H4: '', H5: '', H6: '', H7: '', H8: ''
+                        },
+                        history: []
+                    };
                 });
             });
+
+            return {
+                version: '2.0',
+                updatedAt: new Date().toISOString(),
+                meta: {
+                    activeProject: '2.6.1',
+                    noteMode: app.noteMode,
+                    schema: 'mandala-v2.0'
+                },
+                projects: projects
+            };
+        }
+
+        // 版本遷移
+        function migrateToV2(data) {
+            if (!data.version || data.version === '1.0') {
+                // 舊版本遷移邏輯
+                const newData = createEmptyData();
+                if (data.projects) {
+                    Object.keys(data.projects).forEach(projectId => {
+                        if (newData.projects[projectId]) {
+                            const oldProject = data.projects[projectId];
+                            if (oldProject.data) {
+                                // 遷移舊的9格資料到新結構
+                                Object.keys(oldProject.data).forEach(cell => {
+                                    if (newData.projects[projectId].cells[cell] !== undefined) {
+                                        newData.projects[projectId].cells[cell] = oldProject.data[cell];
+                                    }
+                                });
+                            }
+                            newData.projects[projectId].title = oldProject.name || newData.projects[projectId].title;
+                        }
+                    });
+                }
+                return newData;
+            }
+            return data;
+        }
+
+        // 初始化
+        function initData() {
+            const raw = localStorage.getItem('mandala_data_v2') || localStorage.getItem('mandala_data');
+            if (raw) {
+                try {
+                    app.data = migrateToV2(JSON.parse(raw));
+                } catch (e) {
+                    console.error('資料載入失敗:', e);
+                    app.data = createEmptyData();
+                }
+            } else {
+                app.data = createEmptyData();
+            }
+            
+            // 更新介面
+            loadProject(app.currentProject);
         }
 
         // 載入專案
         function loadProject(projectId) {
-            if (!projectData[projectId]) return;
+            if (!app.data.projects[projectId]) return;
             
-            currentProject = projectId;
+            app.currentProject = projectId;
+            app.currentLayer = 'main';
+            app.data.meta.activeProject = projectId;
             
-            // 更新標題
-            document.getElementById('projectTitle').textContent = projectData[projectId].name;
+            updateProjectTitle();
+            updateBreadcrumb();
+            renderMainLayer();
+            updateActiveProject();
+        }
+
+        // 更新專案標題
+        function updateProjectTitle() {
+            const project = app.data.projects[app.currentProject];
+            document.getElementById('projectTitle').textContent = project.title;
+        }
+
+        // 更新麵包屑
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            if (app.currentLayer === 'main') {
+                breadcrumb.textContent = '主層';
+            } else {
+                breadcrumb.textContent = `主層 > ${app.currentLayer} 子層`;
+            }
+        }
+
+        // 渲染主層
+        function renderMainLayer() {
+            const grid = document.getElementById('mandalaGrid');
+            const project = app.data.projects[app.currentProject];
             
-            // 更新九宮格內容
-            const data = projectData[projectId].data;
-            Object.keys(data).forEach(cell => {
-                const textarea = document.querySelector(`[data-cell="${cell}"]`);
-                if (textarea) {
-                    textarea.value = data[cell] || '';
-                }
+            grid.innerHTML = `
+                <div class="grid-cell" data-position="F" onclick="enterLayer('F')">
+                    <div class="cell-label">F</div>
+                    <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="F" onclick="event.stopPropagation()">${project.cells.F || ''}</textarea>
+                </div>
+                <div class="grid-cell" data-position="C" onclick="enterLayer('C')">
+                    <div class="cell-label">C</div>
+                    <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="C" onclick="event.stopPropagation()">${project.cells.C || ''}</textarea>
+                </div>
+                <div class="grid-cell" data-position="G" onclick="enterLayer('G')">
+                    <div class="cell-label">G</div>
+                    <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="G" onclick="event.stopPropagation()">${project.cells.G || ''}</textarea>
+                </div>
+                <div class="grid-cell" data-position="B" onclick="enterLayer('B')">
+                    <div class="cell-label">B</div>
+                    <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="B" onclick="event.stopPropagation()">${project.cells.B || ''}</textarea>
+                </div>
+                <div class="grid-cell center" data-position="CENTER">
+                    <div class="cell-label">中心</div>
+                    <textarea class="cell-content" placeholder="專案核心主題..." data-cell="CENTER">${project.cells.CENTER || ''}</textarea>
+                </div>
+                <div class="grid-cell" data-position="D" onclick="enterLayer('D')">
+                    <div class="cell-label">D</div>
+                    <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="D" onclick="event.stopPropagation()">${project.cells.D || ''}</textarea>
+                </div>
+                <div class="grid-cell" data-position="E" onclick="enterLayer('E')">
+                    <div class="cell-label">E</div>
+                    <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="E" onclick="event.stopPropagation()">${project.cells.E || ''}</textarea>
+                </div>
+                <div class="grid-cell" data-position="A" onclick="enterLayer('A')">
+                    <div class="cell-label">A</div>
+                    <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="A" onclick="event.stopPropagation()">${project.cells.A || ''}</textarea>
+                </div>
+                <div class="grid-cell" data-position="H" onclick="enterLayer('H')">
+                    <div class="cell-label">H</div>
+                    <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="H" onclick="event.stopPropagation()">${project.cells.H || ''}</textarea>
+                </div>
+            `;
+            
+            bindTextareaEvents();
+        }
+
+        // 進入子層
+        function enterLayer(layer) {
+            app.currentLayer = layer;
+            updateBreadcrumb();
+            renderSubLayer(layer);
+        }
+
+        // 渲染子層
+        function renderSubLayer(layer) {
+            const grid = document.getElementById('mandalaGrid');
+            const project = app.data.projects[app.currentProject];
+            
+            // 子層排列：6-3-7 / 2-中心-4 / 5-1-8
+            grid.innerHTML = `
+                <div class="grid-cell sub-layer" data-position="${layer}6">
+                    <div class="cell-label">${layer}6</div>
+                    <textarea class="cell-content" placeholder="輸入內容..." data-cell="${layer}6">${project.cells[layer + '6'] || ''}</textarea>
+                </div>
+                <div class="grid-cell sub-layer" data-position="${layer}3">
+                    <div class="cell-label">${layer}3</div>
+                    <textarea class="cell-content" placeholder="輸入內容..." data-cell="${layer}3">${project.cells[layer + '3'] || ''}</textarea>
+                </div>
+                <div class="grid-cell sub-layer" data-position="${layer}7">
+                    <div class="cell-label">${layer}7</div>
+                    <textarea class="cell-content" placeholder="輸入內容..." data-cell="${layer}7">${project.cells[layer + '7'] || ''}</textarea>
+                </div>
+                <div class="grid-cell sub-layer" data-position="${layer}2">
+                    <div class="cell-label">${layer}2</div>
+                    <textarea class="cell-content" placeholder="輸入內容..." data-cell="${layer}2">${project.cells[layer + '2'] || ''}</textarea>
+                </div>
+                <div class="grid-cell sub-center" data-position="${layer}_CENTER" onclick="returnToMain()">
+                    <div class="cell-label">${layer} 區域</div>
+                    <textarea class="cell-content" placeholder="此區域主題..." data-cell="${layer}" readonly>${project.cells[layer] || ''}</textarea>
+                </div>
+                <div class="grid-cell sub-layer" data-position="${layer}4">
+                    <div class="cell-label">${layer}4</div>
+                    <textarea class="cell-content" placeholder="輸入內容..." data-cell="${layer}4">${project.cells[layer + '4'] || ''}</textarea>
+                </div>
+                <div class="grid-cell sub-layer" data-position="${layer}5">
+                    <div class="cell-label">${layer}5</div>
+                    <textarea class="cell-content" placeholder="輸入內容..." data-cell="${layer}5">${project.cells[layer + '5'] || ''}</textarea>
+                </div>
+                <div class="grid-cell sub-layer" data-position="${layer}1">
+                    <div class="cell-label">${layer}1</div>
+                    <textarea class="cell-content" placeholder="輸入內容..." data-cell="${layer}1">${project.cells[layer + '1'] || ''}</textarea>
+                </div>
+                <div class="grid-cell sub-layer" data-position="${layer}8">
+                    <div class="cell-label">${layer}8</div>
+                    <textarea class="cell-content" placeholder="輸入內容..." data-cell="${layer}8">${project.cells[layer + '8'] || ''}</textarea>
+                </div>
+            `;
+            
+            bindTextareaEvents();
+        }
+
+        // 返回主層
+        function returnToMain() {
+            app.currentLayer = 'main';
+            updateBreadcrumb();
+            renderMainLayer();
+        }
+
+        // 綁定文字框事件
+        function bindTextareaEvents() {
+            document.querySelectorAll('.cell-content').forEach(textarea => {
+                // 輸入事件
+                textarea.addEventListener('input', function() {
+                    const cell = this.getAttribute('data-cell');
+                    if (cell && app.data.projects[app.currentProject]) {
+                        app.data.projects[app.currentProject].cells[cell] = this.value;
+                        
+                        // 防抖自動儲存
+                        clearTimeout(this.saveTimeout);
+                        this.saveTimeout = setTimeout(() => {
+                            saveToLocalStorage();
+                        }, 800);
+                    }
+                });
+
+                // 筆記模式鍵盤事件
+                textarea.addEventListener('keydown', function(e) {
+                    if (!app.noteMode) return;
+                    
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const pos = this.selectionStart;
+                        const value = this.value;
+                        const newValue = value.substring(0, pos) + '\n- ' + value.substring(this.selectionEnd);
+                        this.value = newValue;
+                        this.selectionStart = this.selectionEnd = pos + 3;
+                        this.dispatchEvent(new Event('input'));
+                    }
+                    
+                    if (e.key === ';' && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        const pos = this.selectionStart;
+                        const date = new Date().toISOString().split('T')[0];
+                        const value = this.value;
+                        const newValue = value.substring(0, pos) + date + value.substring(this.selectionEnd);
+                        this.value = newValue;
+                        this.selectionStart = this.selectionEnd = pos + date.length;
+                        this.dispatchEvent(new Event('input'));
+                    }
+                });
             });
-            
-            // 更新活動項目
+        }
+
+        // 更新活動專案
+        function updateActiveProject() {
             document.querySelectorAll('.project-item').forEach(item => {
                 item.classList.remove('active');
             });
-            document.querySelector(`[data-project="${projectId}"]`)?.classList.add('active');
-            
-            // 更新 URL
-            window.location.hash = `#/mandala/${projectId}`;
-        }
-
-        // 儲存當前專案資料
-        function saveCurrentProject() {
-            if (!currentProject) return;
-            
-            const data = {};
-            document.querySelectorAll('.cell-content').forEach(textarea => {
-                const cell = textarea.getAttribute('data-cell');
-                data[cell] = textarea.value;
-            });
-            
-            projectData[currentProject].data = data;
-        }
-
-        // 側邊欄切換
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebarCollapsed = !sidebarCollapsed;
-            if (sidebarCollapsed) {
-                sidebar.classList.add('collapsed');
-            } else {
-                sidebar.classList.remove('collapsed');
+            const activeItem = document.querySelector(`[data-project="${app.currentProject}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
             }
         }
 
-        // GitHub 相關功能
-        function showGitHubModal() {
-            document.getElementById('githubToken').value = githubToken;
-            document.getElementById('githubModal').style.display = 'block';
+        // 儲存到 LocalStorage
+        function saveToLocalStorage() {
+            app.data.updatedAt = new Date().toISOString();
+            localStorage.setItem('mandala_data_v2', JSON.stringify(app.data));
         }
 
-        function closeGitHubModal() {
-            document.getElementById('githubModal').style.display = 'none';
+        // 本地儲存
+        function saveLocal() {
+            saveToLocalStorage();
+            setSyncStatus('synced', '已儲存');
+            setTimeout(() => {
+                if (app.token) {
+                    setSyncStatus('synced', '已連接');
+                } else {
+                    setSyncStatus('offline', '離線');
+                }
+            }, 1500);
         }
 
-        function saveGitHubConfig() {
-            githubToken = document.getElementById('githubToken').value.trim();
-            if (githubToken) {
-                localStorage.setItem('github_token', githubToken);
-                setSyncStatus('synced', '已連接');
-            } else {
-                localStorage.removeItem('github_token');
-                setSyncStatus('offline', '離線');
-            }
-            closeGitHubModal();
-        }
-
-        function setSyncStatus(status, text) {
-            const statusEl = document.getElementById('syncStatus');
-            statusEl.className = `sync-status ${status}`;
-            statusEl.querySelector('span').textContent = text;
-        }
-
-        // 雲端儲存功能
-        async function saveData() {
-            saveCurrentProject();
-            
-            if (!githubToken) {
-                alert('請先設定 GitHub Token');
-                showGitHubModal();
+        // 本地載入
+        function loadLocal() {
+            const raw = localStorage.getItem('mandala_data_v2');
+            if (!raw) {
+                alert('找不到本地備份資料');
                 return;
             }
-
-            setSyncStatus('syncing', '同步中...');
             
             try {
-                // 準備資料
-                const dataToSave = {
-                    timestamp: new Date().toISOString(),
-                    projects: projectData
-                };
-
-                // 上傳到 GitHub Gist
-                const response = await fetch('https://api.github.com/gists', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `token ${githubToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        description: '曼陀羅專案管理系統資料',
-                        public: false,
-                        files: {
-                            'mandala_data.json': {
-                                content: JSON.stringify(dataToSave, null, 2)
-                            }
-                        }
-                    })
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    localStorage.setItem('gist_id', result.id);
-                    localStorage.setItem('mandala_data', JSON.stringify(projectData));
-                    setSyncStatus('synced', '已同步');
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-            } catch (error) {
-                console.error('儲存失敗:', error);
-                setSyncStatus('error', '同步失敗');
-                // 本地備份
-                localStorage.setItem('mandala_data', JSON.stringify(projectData));
+                app.data = migrateToV2(JSON.parse(raw));
+                loadProject(app.currentProject);
+                alert('本地資料載入成功');
+            } catch (e) {
+                alert('本地資料格式錯誤');
             }
         }
 
-        // 載入資料
-        async function loadData() {
-            if (!githubToken) {
-                // 從本地載入
-                const localData = localStorage.getItem('mandala_data');
-                if (localData) {
-                    projectData = JSON.parse(localData);
-                    if (currentProject) {
-                        loadProject(currentProject);
-                    }
-                    setSyncStatus('offline', '本地資料');
+        // JSON 匯出
+        function exportJSON() {
+            const blob = new Blob([JSON.stringify(app.data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0] + '_' + 
+                            new Date().toTimeString().split(' ')[0].replace(/:/g, '');
+            a.href = url;
+            a.download = `mandala_${app.currentProject}_${timestamp}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // JSON 匯入
+        function importJSONFile() {
+            document.getElementById('importJSONInput').click();
+        }
+
+        function handleJSONImport(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    app.data = migrateToV2(data);
+                    saveToLocalStorage();
+                    loadProject(app.currentProject);
+                    alert('JSON 匯入成功');
+                } catch (error) {
+                    alert('JSON 檔案格式錯誤: ' + error.message);
                 }
-                return;
-            }
-
-            const gistId = localStorage.getItem('gist_id');
-            if (!gistId) {
-                alert('找不到雲端資料');
-                return;
-            }
-
-            setSyncStatus('syncing', '載入中...');
-
-            try {
-                const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-                    headers: {
-                        'Authorization': `token ${githubToken}`
-                    }
-                });
-
-                if (response.ok) {
-                    const gist = await response.json();
-                    const content = gist.files['mandala_data.json'].content;
-                    const data = JSON.parse(content);
-                    
-                    projectData = data.projects || data;
-                    localStorage.setItem('mandala_data', JSON.stringify(projectData));
-                    
-                    if (currentProject) {
-                        loadProject(currentProject);
-                    }
-                    
-                    setSyncStatus('synced', '已載入');
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-            } catch (error) {
-                console.error('載入失敗:', error);
-                setSyncStatus('error', '載入失敗');
-            }
+            };
+            reader.readAsText(file);
         }
 
         // OPML 匯出
         function exportOPML() {
-            if (!currentProject) {
-                alert('請先選擇專案');
-                return;
-            }
-
-            const project = projectData[currentProject];
+            const project = app.data.projects[app.currentProject];
             const now = new Date();
-            const timestamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+            const timestamp = now.toISOString();
             
             let opml = `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
     <head>
-        <title>${project.name}</title>
+        <title>曼陀羅專案: ${project.title}</title>
+        <dateCreated>${timestamp}</dateCreated>
+        <generator>曼陀羅專案管理系統 v3.4</generator>
     </head>
     <body>
-        <outline text="中心: ${escapeXml(project.data.CENTER)}">`;
+        <outline text="中心主題: ${escapeXml(project.cells.CENTER)}">`;
 
-            ['F','C','G','B','D','E','A','H'].forEach(cell => {
+            // 主層 A-H，每個包含 1-8 子層
+            const mainCells = ['F', 'C', 'G', 'B', 'D', 'E', 'A', 'H'];
+            mainCells.forEach(cell => {
                 opml += `
-            <outline text="${cell}: ${escapeXml(project.data[cell])}"/>`;
+            <outline text="${cell}: ${escapeXml(project.cells[cell])}">`;
+                
+                // 子層 1-8
+                for (let i = 1; i <= 8; i++) {
+                    const subCell = cell + i;
+                    opml += `
+                <outline text="${subCell}: ${escapeXml(project.cells[subCell] || '')}"/>`;
+                }
+                
+                opml += `
+            </outline>`;
             });
 
             opml += `
@@ -731,12 +983,92 @@
             const blob = new Blob([opml], { type: 'text/xml' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
+            const fileTimestamp = now.toISOString().replace(/[:.]/g, '-').split('T')[0] + '_' + 
+                                now.toTimeString().split(' ')[0].replace(/:/g, '');
             a.href = url;
-            a.download = `mandala_${currentProject}_${timestamp}.opml`;
+            a.download = `mandala_${app.currentProject}_${fileTimestamp}.opml`;
             a.click();
             URL.revokeObjectURL(url);
         }
 
+        // OPML 匯入
+        function importOPML() {
+            document.getElementById('importOPMLInput').click();
+        }
+
+        function handleOPMLImport(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(e.target.result, 'text/xml');
+                    
+                    // 檢查錯誤
+                    const parseError = xml.querySelector('parsererror');
+                    if (parseError) {
+                        throw new Error('XML 格式錯誤');
+                    }
+                    
+                    const project = app.data.projects[app.currentProject];
+                    const outlines = xml.querySelectorAll('outline');
+                    
+                    // 解析 OPML 結構
+                    outlines.forEach(outline => {
+                        const text = outline.getAttribute('text') || '';
+                        const colonIndex = text.indexOf(':');
+                        
+                        if (colonIndex > 0) {
+                            const key = text.substring(0, colonIndex).trim();
+                            const value = text.substring(colonIndex + 1).trim();
+                            
+                            // 中心主題
+                            if (key === '中心主題') {
+                                project.cells.CENTER = value;
+                            }
+                            // 主層 A-H
+                            else if (['F','C','G','B','D','E','A','H'].includes(key)) {
+                                project.cells[key] = value;
+                                
+                                // 查找子層
+                                const subOutlines = outline.querySelectorAll('outline');
+                                subOutlines.forEach(subOutline => {
+                                    const subText = subOutline.getAttribute('text') || '';
+                                    const subColonIndex = subText.indexOf(':');
+                                    if (subColonIndex > 0) {
+                                        const subKey = subText.substring(0, subColonIndex).trim();
+                                        const subValue = subText.substring(subColonIndex + 1).trim();
+                                        if (project.cells[subKey] !== undefined) {
+                                            project.cells[subKey] = subValue;
+                                        }
+                                    }
+                                });
+                            }
+                            // 直接的子層格子（向下相容）
+                            else if (project.cells[key] !== undefined) {
+                                project.cells[key] = value;
+                            }
+                        }
+                    });
+                    
+                    saveToLocalStorage();
+                    if (app.currentLayer === 'main') {
+                        renderMainLayer();
+                    } else {
+                        renderSubLayer(app.currentLayer);
+                    }
+                    
+                    alert('OPML 匯入成功');
+                } catch (error) {
+                    alert('OPML 匯入失敗: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // XML 轉義
         function escapeXml(str) {
             return (str || '').replace(/[&<>"']/g, s => ({
                 "&": "&amp;",
@@ -747,81 +1079,245 @@
             }[s]));
         }
 
-        // OPML 匯入
-        function importOPML() {
-            document.getElementById('importFile').click();
+        // GitHub Gist 上傳
+        async function uploadGist() {
+            if (!app.token) {
+                alert('請先設定 GitHub Token');
+                showGitHubModal();
+                return;
+            }
+
+            setSyncStatus('syncing', '上傳中...');
+            
+            try {
+                const dataToSave = {
+                    ...app.data,
+                    updatedAt: new Date().toISOString()
+                };
+
+                const body = {
+                    description: `曼陀羅專案管理系統資料 - ${app.currentProject}`,
+                    public: false,
+                    files: {
+                        'mandala_data.json': {
+                            content: JSON.stringify(dataToSave, null, 2)
+                        }
+                    }
+                };
+
+                const isCreate = !app.gistId;
+                const url = isCreate ? 'https://api.github.com/gists' : `https://api.github.com/gists/${app.gistId}`;
+                const method = isCreate ? 'POST' : 'PATCH';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `token ${app.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    app.gistId = result.id;
+                    localStorage.setItem('gist_id', app.gistId);
+                    saveToLocalStorage();
+                    setSyncStatus('synced', '已同步');
+                    
+                    // 顯示分享資訊
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?gist=${app.gistId}`;
+                    alert(`上傳成功！\n跨瀏覽器分享網址：\n${shareUrl}`);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            } catch (error) {
+                console.error('上傳失敗:', error);
+                setSyncStatus('error', '上傳失敗');
+                saveToLocalStorage(); // 本地備份
+                alert('上傳失敗: ' + error.message);
+            }
         }
 
-        function handleImportFile(input) {
-            const file = input.files[0];
-            if (!file) return;
+        // GitHub Gist 下載
+        async function downloadGist() {
+            if (!app.token) {
+                alert('請先設定 GitHub Token');
+                showGitHubModal();
+                return;
+            }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const parser = new DOMParser();
-                    const xml = parser.parseFromString(e.target.result, 'text/xml');
+            const gistId = app.gistId || document.getElementById('gistId').value.trim();
+            if (!gistId) {
+                alert('請提供 Gist ID');
+                showGitHubModal();
+                return;
+            }
+
+            setSyncStatus('syncing', '下載中...');
+
+            try {
+                const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+                    headers: {
+                        'Authorization': `token ${app.token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const gist = await response.json();
+                    const content = gist.files['mandala_data.json']?.content;
                     
-                    const outlines = xml.querySelectorAll('outline');
-                    const data = { CENTER: '', F: '', C: '', G: '', B: '', D: '', E: '', A: '', H: '' };
-                    
-                    outlines.forEach(outline => {
-                        const text = outline.getAttribute('text') || '';
-                        const colonIndex = text.indexOf(':');
-                        if (colonIndex > 0) {
-                            const key = text.substring(0, colonIndex).trim();
-                            const value = text.substring(colonIndex + 1).trim();
-                            
-                            if (key === '中心') {
-                                data.CENTER = value;
-                            } else if (['F','C','G','B','D','E','A','H'].includes(key)) {
-                                data[key] = value;
-                            }
-                        }
-                    });
-                    
-                    if (currentProject) {
-                        projectData[currentProject].data = data;
-                        loadProject(currentProject);
+                    if (!content) {
+                        throw new Error('Gist 中找不到 mandala_data.json 檔案');
                     }
                     
-                    alert('匯入成功');
-                } catch (error) {
-                    alert('匯入失敗: ' + error.message);
+                    const data = JSON.parse(content);
+                    app.data = migrateToV2(data);
+                    app.gistId = gistId;
+                    localStorage.setItem('gist_id', gistId);
+                    saveToLocalStorage();
+                    
+                    loadProject(app.currentProject);
+                    setSyncStatus('synced', '已同步');
+                    alert('下載成功');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
                 }
-            };
-            reader.readAsText(file);
-        }
-
-        // 清除功能
-        function clearCurrentLayer() {
-            if (!currentProject) return;
-            
-            if (confirm('確定要清除當前層的內容嗎？')) {
-                ['F','C','G','B','D','E','A','H'].forEach(cell => {
-                    const textarea = document.querySelector(`[data-cell="${cell}"]`);
-                    if (textarea) textarea.value = '';
-                });
-                saveCurrentProject();
+            } catch (error) {
+                console.error('下載失敗:', error);
+                setSyncStatus('error', '下載失敗');
+                alert('下載失敗: ' + error.message);
             }
         }
 
-        function clearAllData() {
-            if (!currentProject) return;
-            
-            if (confirm('確定要清除整個曼陀羅的內容嗎？此操作無法復原！')) {
-                document.querySelectorAll('.cell-content').forEach(textarea => {
-                    textarea.value = '';
-                });
-                saveCurrentProject();
+        // 分享 Gist
+        function shareGist() {
+            if (!app.gistId) {
+                alert('請先上傳資料到 GitHub');
+                return;
             }
+            
+            const shareUrl = `${window.location.origin}${window.location.pathname}?gist=${app.gistId}`;
+            
+            // 複製到剪貼簿
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert(`分享網址已複製到剪貼簿：\n${shareUrl}`);
+                }).catch(() => {
+                    showShareUrl(shareUrl);
+                });
+            } else {
+                showShareUrl(shareUrl);
+            }
+        }
+
+        function showShareUrl(url) {
+            const textarea = document.createElement('textarea');
+            textarea.value = url;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert(`分享網址：\n${url}\n\n(已複製到剪貼簿)`);
+        }
+
+        // 清除 A-H
+        function clearAH() {
+            if (!confirm('確定要清除當前專案的 A-H 格子內容嗎？')) return;
+            
+            const project = app.data.projects[app.currentProject];
+            const cells = ['F','C','C','B','D','E','A','H'];
+            
+            cells.forEach(cell => {
+                project.cells[cell] = '';
+                // 清除對應的子層
+                for (let i = 1; i <= 8; i++) {
+                    project.cells[cell + i] = '';
+                }
+            });
+            
+            saveToLocalStorage();
+            if (app.currentLayer === 'main') {
+                renderMainLayer();
+            } else {
+                renderSubLayer(app.currentLayer);
+            }
+        }
+
+        // 清除全部
+        function clearAll() {
+            if (!confirm('確定要清除當前專案的所有內容嗎？此操作無法復原！')) return;
+            
+            const project = app.data.projects[app.currentProject];
+            Object.keys(project.cells).forEach(cell => {
+                project.cells[cell] = '';
+            });
+            
+            saveToLocalStorage();
+            if (app.currentLayer === 'main') {
+                renderMainLayer();
+            } else {
+                renderSubLayer(app.currentLayer);
+            }
+        }
+
+        // 同步狀態
+        function setSyncStatus(status, text) {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.className = `sync-status ${status}`;
+            statusEl.querySelector('span').textContent = text;
+        }
+
+        // 側邊欄切換
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        // GitHub 模態框
+        function showGitHubModal() {
+            document.getElementById('githubToken').value = app.token;
+            document.getElementById('gistId').value = app.gistId || '';
+            document.getElementById('noteModeToggle').checked = app.noteMode;
+            document.getElementById('githubModal').style.display = 'block';
+        }
+
+        function closeGitHubModal() {
+            document.getElementById('githubModal').style.display = 'none';
+        }
+
+        function saveGitHubConfig() {
+            app.token = document.getElementById('githubToken').value.trim();
+            app.gistId = document.getElementById('gistId').value.trim() || null;
+            app.noteMode = document.getElementById('noteModeToggle').checked;
+            
+            if (app.token) {
+                localStorage.setItem('github_token', app.token);
+                setSyncStatus('synced', '已連接');
+            } else {
+                localStorage.removeItem('github_token');
+                setSyncStatus('offline', '離線');
+            }
+            
+            if (app.gistId) {
+                localStorage.setItem('gist_id', app.gistId);
+            } else {
+                localStorage.removeItem('gist_id');
+            }
+            
+            localStorage.setItem('note_mode', app.noteMode);
+            app.data.meta.noteMode = app.noteMode;
+            saveToLocalStorage();
+            
+            closeGitHubModal();
         }
 
         // 事件監聽
         document.addEventListener('DOMContentLoaded', function() {
-            initializeProjectData();
+            // 初始化
+            initData();
             
-            // 專案項目點擊
+            // 專案點擊事件
             document.querySelectorAll('.project-item').forEach(item => {
                 item.addEventListener('click', function() {
                     const projectId = this.getAttribute('data-project');
@@ -829,48 +1325,26 @@
                 });
             });
 
-            // 內容變更時自動儲存到本地
-            document.querySelectorAll('.cell-content').forEach(textarea => {
-                textarea.addEventListener('input', function() {
-                    if (currentProject) {
-                        clearTimeout(this.saveTimeout);
-                        this.saveTimeout = setTimeout(() => {
-                            saveCurrentProject();
-                            localStorage.setItem('mandala_data', JSON.stringify(projectData));
-                        }, 1000);
-                    }
-                });
-            });
-
-            // 載入本地資料
-            const localData = localStorage.getItem('mandala_data');
-            if (localData) {
-                try {
-                    const parsed = JSON.parse(localData);
-                    Object.assign(projectData, parsed);
-                } catch (e) {
-                    console.error('載入本地資料失敗:', e);
+            // 檢查 URL 參數
+            const urlParams = new URLSearchParams(window.location.search);
+            const gistId = urlParams.get('gist');
+            if (gistId) {
+                app.gistId = gistId;
+                localStorage.setItem('gist_id', gistId);
+                if (app.token) {
+                    downloadGist();
+                } else {
+                    alert('檢測到分享連結，請先設定 GitHub Token 後下載資料');
+                    showGitHubModal();
                 }
             }
 
             // 檢查 GitHub Token
-            if (githubToken) {
+            if (app.token) {
                 setSyncStatus('synced', '已連接');
             }
 
-            // URL 路由
-            const hash = window.location.hash;
-            if (hash.startsWith('#/mandala/')) {
-                const projectId = hash.substring(10);
-                if (projectData[projectId]) {
-                    loadProject(projectId);
-                }
-            } else {
-                // 預設載入第一個專案
-                loadProject('2.6.1');
-            }
-
-            // Modal 點擊外部關閉
+            // 模態框點擊外部關閉
             document.getElementById('githubModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeGitHubModal();
@@ -884,33 +1358,42 @@
                 switch(e.key) {
                     case 's':
                         e.preventDefault();
-                        saveData();
+                        saveLocal();
                         break;
-                    case 'r':
+                    case 'l':
                         e.preventDefault();
-                        loadData();
+                        loadLocal();
                         break;
-                    case 'e':
+                    case 'i':
                         e.preventDefault();
-                        exportOPML();
+                        importJSONFile();
+                        break;
+                    case 'x':
+                        e.preventDefault();
+                        exportJSON();
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        uploadGist();
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        downloadGist();
+                        break;
+                    case 'Backspace':
+                        e.preventDefault();
+                        clearAH();
                         break;
                 }
             }
             
             if (e.key === 'Escape') {
                 closeGitHubModal();
+                if (app.currentLayer !== 'main') {
+                    returnToMain();
+                }
             }
         });
     </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"978a54b3f8162b7d","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.8.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
 </html>
-    <script id="html_badge_script1">
-        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDn5%2Fnw%2FbZ8cQD2kV1eB4WmN27wwrFJamw%2BGd%2FBHHnxnBF%2BGW%2BIEm2GOqk%2BIP8VgZe30UEz7Z%2FiHTtRRctTu%2BkwspwU2Wx1GPvdLL8kq0AEsDI9bwEx2NrMcUY%2B8uXG8A90YaHS0ZTeauzWF76Fhu19G%2FxWydCWmPK5iMNRVtYbyZsM2drKMYhVewPDsoehfVQEY5IERhCcpai2jmGE8GabiC5sRbuWLOFUHQbcUegGhOwEeIFEXR4x%2BMcoXDIRp4BGTtnL4oEy5CB0a10rb67nWEomPRzIN5D4HiyisBnRBRtmBFbtNFb8bQDCigeHwfvDm2dVa9HUfUvpqdCfiUKqoH%2FmzFz7gki2IPz%2BibxEAPTeNMvp1h8Mp%2FFF%2BfmuWqZsCHrrfcn3aEqbUTTds73MmjXot0u1rzeLEh3%2BNMPw0CrTo5SBM3Rxjd1SraGPowpj%2Fp%2FPI5vU2cNQbjc7IS%2BmtCS%2FP3ioCWuni8RcbbDBYrHeVsP373rTrFSG1m0lheYw%3D%3D";
-        window.__genspark_locale = "zh-TW";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDn5/nw/bZ8cQD2kV1eB4WmN27wwrFJamw+Gd/BHHnxnBF+GW+IEm2GOqk+IP8VgZe30UEz7Z/iHTtRRctTu+kwspwU2Wx1GPvdLL8kq0AEsDI9bwEx2NrMcUY+8uXG8A90YaHS0ZTeauzWF76Fhu19G/xWydCWmPK5iMNRVtYbyZsM2drKMYhVewPDsoehfVQEY5IERhCcpai2jmGE8GabiC5sRbuWLOFUHQbcUegGhOwEeIFEXR4x+McoXDIRp4BGTtnL4oEy5CB0a10rb67nWEomPRzIN5D4HiyisBnRBRtmBFbtNFb8bQDCigeHwfvDm2dVa9HUfUvpqdCfiUKqoH/mzFz7gki2IPz+ibxEAPTeNMvp1h8Mp/FF+fmuWqZsCHrrfcn3aEqbUTTds73MmjXot0u1rzeLEh3+NMPw0CrTo5SBM3Rxjd1SraGPowpj/p/PI5vU2cNQbjc7IS+mtCS/P3ioCWuni8RcbbDBYrHeVsP373rTrFSG1m0lheYw==";
-    </script>
-    
-    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
-    
