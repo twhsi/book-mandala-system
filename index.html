@@ -3,1128 +3,711 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>曼陀羅專案管理系統 - 固定網址版</title>
+    <title>曼陀羅專案管理系統</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Microsoft JhengHei', 'PingFang SC', 'Apple LiGothic Medium', sans-serif; }
-        .mandala-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 8px; 
-            aspect-ratio: 1;
-            max-width: 480px;
-            width: 100%;
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --bg-color: #f8fafc;
+            --danger-color: #dc2626;
         }
-        .grid-cell { 
-            background: #f8fafc; 
-            border: 2px solid #e2e8f0; 
-            border-radius: 8px; 
-            padding: 8px; 
-            display: flex; 
-            flex-direction: column;
-            min-height: 100px;
-            position: relative;
-        }
-        .grid-cell:hover { background: #f1f5f9; }
-        .cell-label { 
-            font-size: 12px; 
-            font-weight: 700; 
-            margin-bottom: 4px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            width: 20px; 
-            height: 20px; 
-            border-radius: 50%; 
-            color: white;
-            flex-shrink: 0;
-        }
-        .cell-content { 
-            flex: 1; 
-            resize: none; 
-            border: none; 
-            outline: none; 
-            background: transparent; 
-            font-size: 12px; 
-            line-height: 1.4;
-            width: 100%;
-        }
-        .center-cell { background: #e2e8f0; border-color: #94a3b8; }
-        .center-label { background: #64748b; }
-        .ring-cell { background: #f1f5f9; }
-        .ring-label { background: #3b82f6; }
-        .detail-cell { background: #f8fafc; }
-        .detail-label { background: #6b7280; }
         
-        /* 章節顏色 */
-        .chapter-26 { --chapter-color: #3b82f6; }
-        .chapter-27 { --chapter-color: #10b981; }
-        .chapter-28 { --chapter-color: #f59e0b; }
-        .chapter-29 { --chapter-color: #8b5cf6; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+        }
         
-        .sidebar { 
-            width: 280px; 
-            height: 100vh; 
-            overflow-y: auto; 
+        .sidebar {
+            width: 180px;
+            min-width: 180px;
             transition: margin-left 0.3s ease;
         }
-        .sidebar.hidden { margin-left: -280px; }
-        .main-content { transition: margin-left 0.3s ease; }
-        .main-content.expanded { margin-left: 0; }
         
-        .project-item { 
-            padding: 8px 12px; 
-            margin: 2px 0; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            transition: all 0.2s;
+        .sidebar.collapsed {
+            margin-left: -180px;
         }
-        .project-item:hover { background: #f1f5f9; }
-        .project-item.active { background: #3b82f6; color: white; }
         
-        .sync-status {
+        .main-content {
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        
+        .mandala-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 150px);
+            grid-template-rows: repeat(3, 110px);
+            gap: 2px;
+            background-color: #cbd5e1;
+            padding: 2px;
+            border-radius: 8px;
+            margin: 0 auto;
+        }
+        
+        .mandala-cell {
+            background: white;
+            border-radius: 6px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .mandala-cell:hover {
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+        }
+        
+        .mandala-cell.center {
+            background: #1e40af;
+            color: white;
+        }
+        
+        .mandala-cell.center .cell-label {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .cell-label {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .cell-content {
+            width: 100%;
+            height: calc(100% - 8px);
+            margin-top: 24px;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: none;
+            color: inherit;
+        }
+        
+        .cell-content::placeholder {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        
+        .project-item {
+            padding: 8px 12px;
+            margin: 2px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .project-item:hover {
+            background-color: #e2e8f0;
+        }
+        
+        .project-item.active {
+            background-color: #dbeafe;
+            border-left-color: var(--primary-color);
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        
+        .status-indicator {
             width: 8px;
             height: 8px;
             border-radius: 50%;
             display: inline-block;
-            margin-left: 8px;
+            margin-right: 6px;
         }
-        .sync-status.synced { background: #10b981; }
-        .sync-status.syncing { background: #f59e0b; animation: pulse 2s infinite; }
-        .sync-status.error { background: #ef4444; }
-        .sync-status.offline { background: #6b7280; }
+        
+        .status-synced { background: #10b981; }
+        .status-syncing { background: #f59e0b; animation: pulse 2s infinite; }
+        .status-error { background: #ef4444; }
+        .status-offline { background: #6b7280; }
         
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
         
-        @media (max-width: 1024px) {
-            .sidebar { width: 240px; }
-            .sidebar.hidden { margin-left: -240px; }
-            .mandala-grid { max-width: 400px; }
-            .grid-cell { min-height: 80px; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
         @media (max-width: 768px) {
-            .sidebar { width: 100%; position: absolute; z-index: 50; }
-            .sidebar.hidden { margin-left: -100%; }
-            .main-content { margin-left: 0 !important; }
+            .sidebar {
+                position: absolute;
+                top: 0;
+                left: 0;
+                height: 100%;
+                background: white;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+                z-index: 100;
+            }
+            
+            .mandala-grid {
+                grid-template-columns: repeat(3, 120px);
+                grid-template-rows: repeat(3, 90px);
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- 固定網址部署說明 Modal -->
-    <div id="deployModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">🔗 固定網址部署方案</h3>
-                <button onclick="closeDeployModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
+<body>
+    <!-- 工具列 -->
+    <header class="bg-white border-b border-gray-200 h-10 flex items-center px-4 sticky top-0 z-50">
+        <button id="toggleSidebar" class="btn btn-secondary text-sm mr-4">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <input type="text" id="projectTitle" placeholder="專案標題" 
+               class="flex-1 px-3 py-1 border border-gray-300 rounded mr-4 text-sm">
+        
+        <div class="flex gap-2">
+            <button id="saveBtn" class="btn btn-primary text-sm">
+                <i class="fas fa-save"></i> 儲存
+            </button>
+            <button id="loadBtn" class="btn btn-secondary text-sm">
+                <i class="fas fa-undo"></i> 回覆
+            </button>
+            <button id="exportBtn" class="btn btn-secondary text-sm">
+                <i class="fas fa-download"></i> 匯出
+            </button>
+            <button id="importBtn" class="btn btn-secondary text-sm">
+                <i class="fas fa-upload"></i> 匯入
+            </button>
+            <button id="githubBtn" class="btn btn-secondary text-sm">
+                <i class="fab fa-github"></i> 雲端
+            </button>
+        </div>
+        
+        <input type="file" id="importFile" accept=".opml,.xml" style="display: none">
+    </header>
+
+    <div class="flex h-screen pt-10">
+        <!-- 左側專案選單 -->
+        <div id="sidebar" class="sidebar bg-white border-r border-gray-200 overflow-y-auto">
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-gray-800">專案管理</h2>
+                    <span id="syncStatus" class="status-indicator status-offline"></span>
+                </div>
+                
+                <button id="newProjectBtn" class="btn btn-primary w-full mb-4 text-sm">
+                    <i class="fas fa-plus"></i> 新建專案
                 </button>
+                
+                <div id="projectList" class="space-y-1">
+                    <!-- 專案列表將動態生成 -->
+                </div>
             </div>
-            <div class="space-y-4 text-sm">
-                <div class="p-4 bg-blue-50 rounded-lg">
-                    <h4 class="font-bold text-blue-800 mb-2">🚀 推薦方案：AI Drive部署</h4>
-                    <p>點擊下方「部署到AI Drive」按鈕，獲得永久固定網址</p>
-                </div>
-                <div class="p-4 bg-green-50 rounded-lg">
-                    <h4 class="font-bold text-green-800 mb-2">📂 GitHub Pages部署</h4>
-                    <ol class="list-decimal ml-4 space-y-1">
-                        <li>下載此HTML檔案</li>
-                        <li>上傳到GitHub Repository</li>
-                        <li>啟用GitHub Pages</li>
-                        <li>獲得如：yourname.github.io/mandala 的固定網址</li>
-                    </ol>
-                </div>
-                <div class="p-4 bg-yellow-50 rounded-lg">
-                    <h4 class="font-bold text-yellow-800 mb-2">🏠 自建伺服器部署</h4>
-                    <p>下載HTML檔案，上傳到您的虛擬主機或伺服器</p>
+        </div>
+
+        <!-- 主編輯區域 -->
+        <div id="mainContent" class="main-content flex-1 flex flex-col">
+            <div id="welcomeScreen" class="flex-1 flex items-center justify-center">
+                <div class="text-center text-gray-500">
+                    <i class="fas fa-th-large text-6xl mb-4"></i>
+                    <h3 class="text-xl font-bold mb-2">歡迎使用曼陀羅專案管理系統</h3>
+                    <p>選擇左側專案或建立新專案開始編輯</p>
                 </div>
             </div>
-            <div class="mt-6 flex gap-3">
-                <button onclick="downloadHTML()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    <i class="fas fa-download mr-2"></i>下載HTML檔案
-                </button>
-                <button onclick="closeDeployModal()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-                    關閉
-                </button>
+            
+            <div id="editArea" class="flex-1 p-6" style="display: none;">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 id="currentTitle" class="text-xl font-bold text-gray-800"></h1>
+                            <p id="currentSubtitle" class="text-sm text-gray-600"></p>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button id="backBtn" class="btn btn-secondary text-sm" style="display: none;">
+                                <i class="fas fa-arrow-left"></i> 返回第一層
+                            </button>
+                            <button id="clearCurrentBtn" class="btn btn-danger text-sm">
+                                <i class="fas fa-eraser"></i> 清除當前層
+                            </button>
+                            <button id="clearAllBtn" class="btn btn-danger text-sm">
+                                <i class="fas fa-trash"></i> 清除整個曼陀羅
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mandala-grid" id="mandalaGrid">
+                        <!-- 九宮格將動態生成 -->
+                    </div>
+                    
+                    <div class="mt-6 text-center text-sm text-gray-500" id="navInfo">
+                        點擊 A、B、C、D、E、F、G、H 進入第二層九宮格編輯
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="flex h-screen">
-        <!-- Sidebar -->
-        <div id="sidebar" class="sidebar bg-white shadow-lg border-r border-gray-200">
-            <!-- Header -->
-            <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-lg font-bold text-gray-800">曼陀羅專案管理</h2>
-                    <button onclick="toggleSidebar()" class="lg:hidden">
-                        <i class="fas fa-times text-gray-500"></i>
-                    </button>
-                </div>
-                
-                <!-- GitHub 設定狀態 -->
-                <div id="githubStatus" class="text-xs text-gray-600 mb-2">
-                    <i class="fas fa-github mr-1"></i>
-                    <span id="githubStatusText">未連接GitHub</span>
-                    <span id="githubSyncStatus" class="sync-status offline"></span>
-                </div>
-                
-                <!-- 快速搜尋 -->
-                <div class="relative">
-                    <input type="text" id="projectSearch" placeholder="搜尋專案 (如: 2.6.1 或 目標)" 
-                           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <i class="fas fa-search absolute right-3 top-2.5 text-gray-400"></i>
-                </div>
-            </div>
-            
-            <!-- 專案列表 -->
-            <div class="flex-1 overflow-y-auto p-2">
-                <div id="projectList">
-                    <!-- 2.6 系列 -->
-                    <div class="mb-4">
-                        <div class="flex items-center justify-between px-2 py-1 text-sm font-semibold text-blue-800 bg-blue-50 rounded">
-                            <span><i class="fas fa-folder mr-2"></i>2.6 系列</span>
-                            <span class="text-xs">7項</span>
-                        </div>
-                        <div class="ml-4 mt-1">
-                            <div class="project-item chapter-26" data-project="2.6.1">
-                                <i class="fas fa-bullseye mr-2"></i>2.6.1 目標
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-26" data-project="2.6.2">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>2.6.2 阻礙
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-26" data-project="2.6.3">
-                                <i class="fas fa-dumbbell mr-2"></i>2.6.3 努力
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-26" data-project="2.6.4">
-                                <i class="fas fa-check-circle mr-2"></i>2.6.4 結果
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-26" data-project="2.6.5">
-                                <i class="fas fa-bolt mr-2"></i>2.6.5 意外
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-26" data-project="2.6.6">
-                                <i class="fas fa-exchange-alt mr-2"></i>2.6.6 轉彎
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-26" data-project="2.6.7">
-                                <i class="fas fa-flag-checkered mr-2"></i>2.6.7 結局
-                                <span class="sync-status offline"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 2.7 系列 -->
-                    <div class="mb-4">
-                        <div class="flex items-center justify-between px-2 py-1 text-sm font-semibold text-green-800 bg-green-50 rounded">
-                            <span><i class="fas fa-folder mr-2"></i>2.7 系列</span>
-                            <span class="text-xs">7項</span>
-                        </div>
-                        <div class="ml-4 mt-1">
-                            <div class="project-item chapter-27" data-project="2.7.1">
-                                <i class="fas fa-bullseye mr-2"></i>2.7.1 目標
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-27" data-project="2.7.2">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>2.7.2 阻礙
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-27" data-project="2.7.3">
-                                <i class="fas fa-dumbbell mr-2"></i>2.7.3 努力
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-27" data-project="2.7.4">
-                                <i class="fas fa-check-circle mr-2"></i>2.7.4 結果
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-27" data-project="2.7.5">
-                                <i class="fas fa-bolt mr-2"></i>2.7.5 意外
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-27" data-project="2.7.6">
-                                <i class="fas fa-exchange-alt mr-2"></i>2.7.6 轉彎
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-27" data-project="2.7.7">
-                                <i class="fas fa-flag-checkered mr-2"></i>2.7.7 結局
-                                <span class="sync-status offline"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 2.8 系列 -->
-                    <div class="mb-4">
-                        <div class="flex items-center justify-between px-2 py-1 text-sm font-semibold text-yellow-800 bg-yellow-50 rounded">
-                            <span><i class="fas fa-folder mr-2"></i>2.8 系列</span>
-                            <span class="text-xs">7項</span>
-                        </div>
-                        <div class="ml-4 mt-1">
-                            <div class="project-item chapter-28" data-project="2.8.1">
-                                <i class="fas fa-bullseye mr-2"></i>2.8.1 目標
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-28" data-project="2.8.2">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>2.8.2 阻礙
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-28" data-project="2.8.3">
-                                <i class="fas fa-dumbbell mr-2"></i>2.8.3 努力
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-28" data-project="2.8.4">
-                                <i class="fas fa-check-circle mr-2"></i>2.8.4 結果
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-28" data-project="2.8.5">
-                                <i class="fas fa-bolt mr-2"></i>2.8.5 意外
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-28" data-project="2.8.6">
-                                <i class="fas fa-exchange-alt mr-2"></i>2.8.6 轉彎
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-28" data-project="2.8.7">
-                                <i class="fas fa-flag-checkered mr-2"></i>2.8.7 結局
-                                <span class="sync-status offline"></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 2.9 系列 -->
-                    <div class="mb-4">
-                        <div class="flex items-center justify-between px-2 py-1 text-sm font-semibold text-purple-800 bg-purple-50 rounded">
-                            <span><i class="fas fa-folder mr-2"></i>2.9 系列</span>
-                            <span class="text-xs">7項</span>
-                        </div>
-                        <div class="ml-4 mt-1">
-                            <div class="project-item chapter-29" data-project="2.9.1">
-                                <i class="fas fa-bullseye mr-2"></i>2.9.1 目標
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-29" data-project="2.9.2">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>2.9.2 阻礙
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-29" data-project="2.9.3">
-                                <i class="fas fa-dumbbell mr-2"></i>2.9.3 努力
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-29" data-project="2.9.4">
-                                <i class="fas fa-check-circle mr-2"></i>2.9.4 結果
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-29" data-project="2.9.5">
-                                <i class="fas fa-bolt mr-2"></i>2.9.5 意外
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-29" data-project="2.9.6">
-                                <i class="fas fa-exchange-alt mr-2"></i>2.9.6 轉彎
-                                <span class="sync-status offline"></span>
-                            </div>
-                            <div class="project-item chapter-29" data-project="2.9.7">
-                                <i class="fas fa-flag-checkered mr-2"></i>2.9.7 結局
-                                <span class="sync-status offline"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- GitHub 設定按鈕 -->
-            <div class="p-4 border-t border-gray-200">
-                <button onclick="showGitHubSetup()" class="w-full bg-gray-800 text-white py-2 px-4 rounded-md text-sm hover:bg-gray-700 transition-colors">
-                    <i class="fab fa-github mr-2"></i>GitHub 雲端設定
-                </button>
-            </div>
-        </div>
-        
-        <!-- Main Content -->
-        <div id="mainContent" class="main-content flex-1 flex flex-col ml-0 lg:ml-280">
-            <!-- Top Bar -->
-            <div class="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <button onclick="toggleSidebar()" class="lg:hidden">
-                            <i class="fas fa-bars text-gray-600"></i>
-                        </button>
-                        
-                        <!-- 專案選擇器 -->
-                        <select id="projectSelector" class="text-lg font-semibold text-gray-800 border-none bg-transparent focus:outline-none cursor-pointer">
-                            <option value="">選擇專案...</option>
-                        </select>
-                        
-                        <!-- 麵包屑 -->
-                        <div id="breadcrumb" class="text-sm text-gray-500 hidden md:block"></div>
-                    </div>
-                    
-                    <div class="flex items-center gap-2">
-                        <!-- 同步狀態指示 -->
-                        <div id="syncIndicator" class="flex items-center text-sm text-gray-600">
-                            <span id="syncStatusIcon" class="sync-status offline mr-2"></span>
-                            <span id="syncStatusText">離線</span>
-                        </div>
-                        
-                        <!-- 操作按鈕 -->
-                        <div class="flex gap-2">
-                            <button onclick="saveProject()" class="bg-blue-500 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-600 transition-colors">
-                                <i class="fas fa-save mr-1"></i>儲存
-                            </button>
-                            <button onclick="loadProject()" class="bg-green-500 text-white px-3 py-1.5 rounded text-sm hover:bg-green-600 transition-colors">
-                                <i class="fas fa-undo mr-1"></i>回覆
-                            </button>
-                            <button onclick="exportCurrentOPML()" class="bg-purple-500 text-white px-3 py-1.5 rounded text-sm hover:bg-purple-600 transition-colors">
-                                <i class="fas fa-download mr-1"></i>匯出
-                            </button>
-                            <button onclick="importOPML()" class="bg-yellow-500 text-white px-3 py-1.5 rounded text-sm hover:bg-yellow-600 transition-colors">
-                                <i class="fas fa-upload mr-1"></i>匯入
-                            </button>
-                            <button onclick="showDeployModal()" class="bg-red-500 text-white px-3 py-1.5 rounded text-sm hover:bg-red-600 transition-colors">
-                                <i class="fas fa-link mr-1"></i>固定網址
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 專案內容區 -->
-            <div class="flex-1 p-6 overflow-auto">
-                <div id="welcomeScreen" class="text-center py-20">
-                    <i class="fas fa-th text-6xl text-gray-300 mb-6"></i>
-                    <h2 class="text-2xl font-bold text-gray-600 mb-4">歡迎使用曼陀羅專案管理系統</h2>
-                    <p class="text-gray-500 mb-6">請從左側選擇一個專案開始編輯</p>
-                    <div class="space-y-2 text-sm text-gray-400">
-                        <p>💡 提示：設定GitHub Token以啟用雲端同步</p>
-                        <p>🔗 點擊右上角「固定網址」了解部署方案</p>
-                    </div>
-                </div>
-                
-                <div id="mandalaEditor" class="hidden">
-                    <div class="flex items-center justify-between mb-6">
-                        <div>
-                            <h1 id="projectTitle" class="text-2xl font-bold text-gray-800"></h1>
-                            <p id="projectSubtitle" class="text-gray-600"></p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="clearCurrentLevel()" class="bg-orange-500 text-white px-3 py-1.5 rounded text-sm hover:bg-orange-600">
-                                <i class="fas fa-eraser mr-1"></i>清除當前層
-                            </button>
-                            <button onclick="clearEntireMandala()" class="bg-red-500 text-white px-3 py-1.5 rounded text-sm hover:bg-red-600">
-                                <i class="fas fa-trash mr-1"></i>清除整個曼陀羅
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- 返回按鈕 -->
-                    <button id="backButton" onclick="goBackToLevel1()" class="mb-4 bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600 hidden">
-                        <i class="fas fa-arrow-left mr-2"></i>返回第一層
-                    </button>
-                    
-                    <!-- 九宮格 -->
-                    <div class="flex justify-center">
-                        <div id="mandalaGrid" class="mandala-grid">
-                            <!-- 九宮格內容將通過 JavaScript 生成 -->
-                        </div>
-                    </div>
-                    
-                    <!-- 導航提示 -->
-                    <div id="navigationInfo" class="mt-6 p-4 bg-blue-50 rounded-lg text-center text-sm text-blue-800">
-                        點擊 A、B、C、D、E、F、G、H 進入第二層九宮格編輯細節內容
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- GitHub 設定 Modal -->
-    <div id="githubModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 class="text-lg font-bold mb-4">GitHub 雲端設定</h3>
+    <!-- GitHub 設定模態框 -->
+    <div id="githubModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold mb-4">GitHub 雲端同步設定</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">GitHub Personal Access Token</label>
-                    <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxx" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <p class="text-xs text-gray-500 mt-1">需要 'gist' 權限</p>
+                    <label class="block text-sm font-medium mb-1">GitHub Token</label>
+                    <input type="password" id="githubToken" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded" 
+                           placeholder="輸入您的 GitHub Personal Access Token">
                 </div>
-                <div class="flex gap-3">
-                    <button onclick="connectGitHub()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex-1">
-                        連接 GitHub
-                    </button>
-                    <button onclick="closeGitHubModal()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-                        取消
-                    </button>
+                <div class="flex gap-2">
+                    <button id="saveGithubBtn" class="btn btn-primary">儲存設定</button>
+                    <button id="cancelGithubBtn" class="btn btn-secondary">取消</button>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- 檔案匯入 -->
-    <input type="file" id="fileInput" accept=".opml,.xml" style="display: none;" onchange="handleFileImport(event)">
 
     <script>
         // 全域變數
         let currentProject = null;
         let currentLevel = 1; // 1=第一層, 2=第二層
-        let currentSection = null; // A-H
-        let githubToken = localStorage.getItem('github_token') || '';
-        let projectData = {};
-        let sidebarVisible = window.innerWidth >= 1024;
-        
-        // 專案配置
-        const PROJECT_CONFIG = {
-            '2.6.1': { name: '目標', chapter: '2.6', color: 'blue' },
-            '2.6.2': { name: '阻礙', chapter: '2.6', color: 'blue' },
-            '2.6.3': { name: '努力', chapter: '2.6', color: 'blue' },
-            '2.6.4': { name: '結果', chapter: '2.6', color: 'blue' },
-            '2.6.5': { name: '意外', chapter: '2.6', color: 'blue' },
-            '2.6.6': { name: '轉彎', chapter: '2.6', color: 'blue' },
-            '2.6.7': { name: '結局', chapter: '2.6', color: 'blue' },
-            '2.7.1': { name: '目標', chapter: '2.7', color: 'green' },
-            '2.7.2': { name: '阻礙', chapter: '2.7', color: 'green' },
-            '2.7.3': { name: '努力', chapter: '2.7', color: 'green' },
-            '2.7.4': { name: '結果', chapter: '2.7', color: 'green' },
-            '2.7.5': { name: '意外', chapter: '2.7', color: 'green' },
-            '2.7.6': { name: '轉彎', chapter: '2.7', color: 'green' },
-            '2.7.7': { name: '結局', chapter: '2.7', color: 'green' },
-            '2.8.1': { name: '目標', chapter: '2.8', color: 'yellow' },
-            '2.8.2': { name: '阻礙', chapter: '2.8', color: 'yellow' },
-            '2.8.3': { name: '努力', chapter: '2.8', color: 'yellow' },
-            '2.8.4': { name: '結果', chapter: '2.8', color: 'yellow' },
-            '2.8.5': { name: '意外', chapter: '2.8', color: 'yellow' },
-            '2.8.6': { name: '轉彎', chapter: '2.8', color: 'yellow' },
-            '2.8.7': { name: '結局', chapter: '2.8', color: 'yellow' },
-            '2.9.1': { name: '目標', chapter: '2.9', color: 'purple' },
-            '2.9.2': { name: '阻礙', chapter: '2.9', color: 'purple' },
-            '2.9.3': { name: '努力', chapter: '2.9', color: 'purple' },
-            '2.9.4': { name: '結果', chapter: '2.9', color: 'purple' },
-            '2.9.5': { name: '意外', chapter: '2.9', color: 'purple' },
-            '2.9.6': { name: '轉彎', chapter: '2.9', color: 'purple' },
-            '2.9.7': { name: '結局', chapter: '2.9', color: 'purple' }
+        let currentSection = null; // A..H
+        let projects = {};
+        let githubToken = localStorage.getItem('githubToken') || '';
+        let sidebarCollapsed = false;
+
+        // 專案結構模板
+        const projectTemplate = {
+            title: '',
+            level1: {
+                center: { label: '中心', content: '' },
+                sections: {
+                    F: { label: 'F', content: '' },
+                    C: { label: 'C', content: '' },
+                    G: { label: 'G', content: '' },
+                    B: { label: 'B', content: '' },
+                    D: { label: 'D', content: '' },
+                    E: { label: 'E', content: '' },
+                    A: { label: 'A', content: '' },
+                    H: { label: 'H', content: '' }
+                }
+            },
+            level2: {}
         };
-        
-        // 九宮格布局順序
-        const LEVEL1_ORDER = ['F', 'C', 'G', 'B', 'CENTER', 'D', 'E', 'A', 'H'];
-        const LEVEL2_ORDER = ['6', '3', '7', '2', 'CENTER', '4', '5', '1', '8'];
-        
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-            updateSidebarVisibility();
-            checkGitHubConnection();
-            loadProjectsFromLocalStorage();
-            setupRouting();
-            setupProjectSelector();
-            setupSearch();
-        });
-        
-        // 路由系統
-        function setupRouting() {
-            const hash = window.location.hash;
-            if (hash.startsWith('#/mandala/')) {
-                const projectId = hash.replace('#/mandala/', '');
-                if (PROJECT_CONFIG[projectId]) {
-                    selectProject(projectId);
+
+        // 初始化level2結構
+        ['A','B','C','D','E','F','G','H'].forEach(letter => {
+            projectTemplate.level2[letter] = {
+                center: { label: letter, content: '' },
+                sections: {
+                    '6': { label: '6', content: '' },
+                    '3': { label: '3', content: '' },
+                    '7': { label: '7', content: '' },
+                    '2': { label: '2', content: '' },
+                    '4': { label: '4', content: '' },
+                    '5': { label: '5', content: '' },
+                    '1': { label: '1', content: '' },
+                    '8': { label: '8', content: '' }
                 }
-            }
-            
-            window.addEventListener('hashchange', () => {
-                const hash = window.location.hash;
-                if (hash.startsWith('#/mandala/')) {
-                    const projectId = hash.replace('#/mandala/', '');
-                    if (PROJECT_CONFIG[projectId]) {
-                        selectProject(projectId);
-                    }
-                }
-            });
-        }
-        
-        // 初始化應用
-        function initializeApp() {
-            // 初始化專案數據結構
-            Object.keys(PROJECT_CONFIG).forEach(projectId => {
-                if (!projectData[projectId]) {
-                    projectData[projectId] = createEmptyMandala();
-                }
-            });
-            
-            // 設置項目點擊事件
-            document.querySelectorAll('.project-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const projectId = item.getAttribute('data-project');
-                    selectProject(projectId);
-                });
-            });
-            
-            // 響應式處理
-            window.addEventListener('resize', updateSidebarVisibility);
-        }
-        
-        // 創建空的曼陀羅數據結構
-        function createEmptyMandala() {
-            const mandala = {
-                center: { content: '' },
-                sections: {}
             };
+        });
+
+        // 默認專案列表
+        const defaultProjects = [
+            { id: '2.6.1', name: '2.6.1 目標', series: '2.6' },
+            { id: '2.6.2', name: '2.6.2 阻礙', series: '2.6' },
+            { id: '2.6.3', name: '2.6.3 努力', series: '2.6' },
+            { id: '2.6.4', name: '2.6.4 結果', series: '2.6' },
+            { id: '2.6.5', name: '2.6.5 意外', series: '2.6' },
+            { id: '2.6.6', name: '2.6.6 轉彎', series: '2.6' },
+            { id: '2.6.7', name: '2.6.7 結局', series: '2.6' },
+            { id: '2.7.1', name: '2.7.1 目標', series: '2.7' },
+            { id: '2.7.2', name: '2.7.2 阻礙', series: '2.7' },
+            { id: '2.7.3', name: '2.7.3 努力', series: '2.7' },
+            { id: '2.7.4', name: '2.7.4 結果', series: '2.7' },
+            { id: '2.7.5', name: '2.7.5 意外', series: '2.7' },
+            { id: '2.7.6', name: '2.7.6 轉彎', series: '2.7' },
+            { id: '2.7.7', name: '2.7.7 結局', series: '2.7' },
+            { id: '2.8.1', name: '2.8.1 目標', series: '2.8' },
+            { id: '2.8.2', name: '2.8.2 阻礙', series: '2.8' },
+            { id: '2.8.3', name: '2.8.3 努力', series: '2.8' },
+            { id: '2.8.4', name: '2.8.4 結果', series: '2.8' },
+            { id: '2.8.5', name: '2.8.5 意外', series: '2.8' },
+            { id: '2.8.6', name: '2.8.6 轉彎', series: '2.8' },
+            { id: '2.8.7', name: '2.8.7 結局', series: '2.8' },
+            { id: '2.9.1', name: '2.9.1 目標', series: '2.9' },
+            { id: '2.9.2', name: '2.9.2 阻礙', series: '2.9' },
+            { id: '2.9.3', name: '2.9.3 努力', series: '2.9' },
+            { id: '2.9.4', name: '2.9.4 結果', series: '2.9' },
+            { id: '2.9.5', name: '2.9.5 意外', series: '2.9' },
+            { id: '2.9.6', name: '2.9.6 轉彎', series: '2.9' },
+            { id: '2.9.7', name: '2.9.7 結局', series: '2.9' }
+        ];
+
+        // 九宮格排列順序
+        const level1Order = ['F', 'C', 'G', 'B', 'CENTER', 'D', 'E', 'A', 'H'];
+        const level2Order = ['6', '3', '7', '2', 'CENTER', '4', '5', '1', '8'];
+
+        // 初始化
+        function init() {
+            loadProjects();
+            renderProjectList();
+            bindEvents();
+            checkUrlHash();
             
-            ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].forEach(letter => {
-                mandala.sections[letter] = {
-                    center: { content: '' },
-                    details: {}
-                };
-                
-                ['1', '2', '3', '4', '5', '6', '7', '8'].forEach(num => {
-                    mandala.sections[letter].details[num] = { content: '' };
+            // 自動選擇第一個專案
+            if (Object.keys(projects).length > 0 && !currentProject) {
+                const firstProject = Object.keys(projects)[0];
+                selectProject(firstProject);
+            }
+        }
+
+        // 載入專案資料
+        function loadProjects() {
+            const saved = localStorage.getItem('mandalaProjects');
+            if (saved) {
+                projects = JSON.parse(saved);
+            } else {
+                // 初始化默認專案
+                defaultProjects.forEach(proj => {
+                    projects[proj.id] = {
+                        ...JSON.parse(JSON.stringify(projectTemplate)),
+                        title: proj.name
+                    };
                 });
+                saveProjects();
+            }
+        }
+
+        // 儲存專案資料
+        function saveProjects() {
+            localStorage.setItem('mandalaProjects', JSON.stringify(projects));
+            updateSyncStatus('synced');
+        }
+
+        // 渲染專案列表
+        function renderProjectList() {
+            const container = document.getElementById('projectList');
+            const seriesGroups = {};
+            
+            // 按系列分組
+            Object.keys(projects).forEach(id => {
+                const series = id.substring(0, 3); // 2.6, 2.7, etc.
+                if (!seriesGroups[series]) {
+                    seriesGroups[series] = [];
+                }
+                seriesGroups[series].push({ id, ...projects[id] });
             });
             
-            return mandala;
+            let html = '';
+            Object.keys(seriesGroups).sort().forEach(series => {
+                html += `<div class="mb-4">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">${series} 系列</h4>`;
+                
+                seriesGroups[series].forEach(project => {
+                    const isActive = currentProject === project.id ? 'active' : '';
+                    html += `<div class="project-item ${isActive}" data-id="${project.id}">
+                        <div class="text-sm font-medium">${project.title}</div>
+                    </div>`;
+                });
+                
+                html += '</div>';
+            });
+            
+            container.innerHTML = html;
         }
-        
+
         // 選擇專案
         function selectProject(projectId) {
-            if (!PROJECT_CONFIG[projectId]) return;
-            
             currentProject = projectId;
             currentLevel = 1;
             currentSection = null;
             
-            // 更新URL
-            window.location.hash = `/mandala/${projectId}`;
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('editArea').style.display = 'block';
             
-            // 更新UI
-            updateActiveProject();
-            showMandalaEditor();
+            updateTitle();
             renderMandala();
-            updateBreadcrumb();
-            
-            // 從雲端載入資料
-            loadProjectFromCloud(projectId);
+            renderProjectList();
+            updateUrl();
         }
-        
-        // 更新專案選擇器
-        function setupProjectSelector() {
-            const selector = document.getElementById('projectSelector');
-            selector.innerHTML = '<option value="">選擇專案...</option>';
+
+        // 更新標題
+        function updateTitle() {
+            if (!currentProject) return;
             
-            Object.keys(PROJECT_CONFIG).forEach(projectId => {
-                const config = PROJECT_CONFIG[projectId];
-                const option = document.createElement('option');
-                option.value = projectId;
-                option.textContent = `${projectId} ${config.name}`;
-                selector.appendChild(option);
-            });
+            const project = projects[currentProject];
+            document.getElementById('projectTitle').value = project.title;
+            document.getElementById('currentTitle').textContent = project.title;
             
-            selector.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    selectProject(e.target.value);
-                }
-            });
-        }
-        
-        // 搜尋功能
-        function setupSearch() {
-            const searchInput = document.getElementById('projectSearch');
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase();
-                document.querySelectorAll('.project-item').forEach(item => {
-                    const text = item.textContent.toLowerCase();
-                    const parent = item.closest('.mb-4');
-                    if (text.includes(query)) {
-                        item.style.display = 'block';
-                        parent.style.display = 'block';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-                
-                // 如果沒有搜尋內容，顯示所有項目
-                if (!query) {
-                    document.querySelectorAll('.project-item').forEach(item => {
-                        item.style.display = 'block';
-                    });
-                    document.querySelectorAll('.mb-4').forEach(section => {
-                        section.style.display = 'block';
-                    });
-                }
-            });
-        }
-        
-        // 更新活躍專案
-        function updateActiveProject() {
-            document.querySelectorAll('.project-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            if (currentProject) {
-                const activeItem = document.querySelector(`[data-project="${currentProject}"]`);
-                if (activeItem) {
-                    activeItem.classList.add('active');
-                }
-                
-                // 更新專案選擇器
-                document.getElementById('projectSelector').value = currentProject;
+            let subtitle = '';
+            if (currentLevel === 1) {
+                subtitle = '第一層：主要架構';
+            } else {
+                subtitle = `第二層：${currentSection} 區域詳細內容`;
             }
+            document.getElementById('currentSubtitle').textContent = subtitle;
         }
-        
-        // 顯示曼陀羅編輯器
-        function showMandalaEditor() {
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('mandalaEditor').classList.remove('hidden');
-            
-            const config = PROJECT_CONFIG[currentProject];
-            document.getElementById('projectTitle').textContent = `${currentProject} ${config.name}`;
-            document.getElementById('projectSubtitle').textContent = `${config.chapter} 系列`;
-        }
-        
-        // 渲染曼陀羅
+
+        // 渲染曼陀羅九宮格
         function renderMandala() {
-            const grid = document.getElementById('mandalaGrid');
-            grid.innerHTML = '';
+            if (!currentProject) return;
+            
+            const container = document.getElementById('mandalaGrid');
+            const project = projects[currentProject];
+            const order = currentLevel === 1 ? level1Order : level2Order;
+            
+            container.innerHTML = '';
+            
+            order.forEach(pos => {
+                const cell = document.createElement('div');
+                cell.className = 'mandala-cell';
+                
+                if (pos === 'CENTER') {
+                    cell.classList.add('center');
+                    const centerData = currentLevel === 1 
+                        ? project.level1.center 
+                        : project.level2[currentSection].center;
+                    
+                    cell.innerHTML = `
+                        <div class="cell-label center-label">${centerData.label}</div>
+                        <textarea class="cell-content" placeholder="中心主題..."
+                                  onchange="updateContent('center', '${pos}', this.value)">${centerData.content}</textarea>
+                    `;
+                } else {
+                    const sectionData = currentLevel === 1 
+                        ? project.level1.sections[pos]
+                        : project.level2[currentSection].sections[pos];
+                    
+                    const onClick = currentLevel === 1 && pos !== 'CENTER' 
+                        ? `onclick="enterLevel2('${pos}')"` 
+                        : '';
+                    
+                    cell.innerHTML = `
+                        <div class="cell-label" ${onClick}>${sectionData.label}</div>
+                        <textarea class="cell-content" placeholder="輸入內容..."
+                                  onchange="updateContent('section', '${pos}', this.value)">${sectionData.content}</textarea>
+                    `;
+                }
+                
+                container.appendChild(cell);
+            });
+            
+            // 更新導航資訊
+            const navInfo = document.getElementById('navInfo');
+            const backBtn = document.getElementById('backBtn');
             
             if (currentLevel === 1) {
-                renderLevel1();
+                navInfo.textContent = '點擊 A、B、C、D、E、F、G、H 進入第二層九宮格編輯';
+                backBtn.style.display = 'none';
             } else {
-                renderLevel2();
+                navInfo.textContent = `正在編輯 ${currentSection} 區域的詳細內容`;
+                backBtn.style.display = 'inline-flex';
             }
         }
-        
-        // 渲染第一層
-        function renderLevel1() {
-            const grid = document.getElementById('mandalaGrid');
-            document.getElementById('backButton').classList.add('hidden');
-            document.getElementById('navigationInfo').textContent = '點擊 A、B、C、D、E、F、G、H 進入第二層九宮格編輯細節內容';
-            
-            LEVEL1_ORDER.forEach(pos => {
-                const cell = document.createElement('div');
-                
-                if (pos === 'CENTER') {
-                    cell.className = 'grid-cell center-cell';
-                    const content = projectData[currentProject]?.center?.content || '';
-                    cell.innerHTML = `
-                        <div class="cell-label center-label">中心</div>
-                        <textarea class="cell-content" placeholder="主中心內容..." 
-                                  onchange="updateContent('center', '', this.value)">${content}</textarea>
-                    `;
-                } else {
-                    cell.className = 'grid-cell ring-cell cursor-pointer';
-                    const sectionData = projectData[currentProject]?.sections?.[pos];
-                    const content = sectionData?.center?.content || '';
-                    cell.innerHTML = `
-                        <div class="cell-label ring-label">${pos}</div>
-                        <textarea class="cell-content" placeholder="${pos} 區域中心..." 
-                                  onchange="updateContent('section', '${pos}', this.value)">${content}</textarea>
-                    `;
-                    
-                    cell.addEventListener('click', (e) => {
-                        if (e.target.classList.contains('cell-label')) {
-                            enterLevel2(pos);
-                        }
-                    });
-                }
-                
-                grid.appendChild(cell);
-            });
-        }
-        
-        // 渲染第二層
-        function renderLevel2() {
-            const grid = document.getElementById('mandalaGrid');
-            document.getElementById('backButton').classList.remove('hidden');
-            document.getElementById('navigationInfo').textContent = `正在編輯 ${currentSection} 區域的詳細內容，中央為該區域的中心主題`;
-            
-            LEVEL2_ORDER.forEach(pos => {
-                const cell = document.createElement('div');
-                
-                if (pos === 'CENTER') {
-                    cell.className = 'grid-cell ring-cell';
-                    const content = projectData[currentProject]?.sections?.[currentSection]?.center?.content || '';
-                    cell.innerHTML = `
-                        <div class="cell-label ring-label">${currentSection}</div>
-                        <textarea class="cell-content" placeholder="${currentSection} 區域中心..." 
-                                  onchange="updateContent('section', '${currentSection}', this.value)">${content}</textarea>
-                    `;
-                } else {
-                    cell.className = 'grid-cell detail-cell';
-                    const detailData = projectData[currentProject]?.sections?.[currentSection]?.details?.[pos];
-                    const content = detailData?.content || '';
-                    cell.innerHTML = `
-                        <div class="cell-label detail-label">${pos}</div>
-                        <textarea class="cell-content" placeholder="詳細內容..." 
-                                  onchange="updateContent('detail', '${currentSection}.${pos}', this.value)">${content}</textarea>
-                    `;
-                }
-                
-                grid.appendChild(cell);
-            });
-        }
-        
+
         // 進入第二層
         function enterLevel2(section) {
             currentLevel = 2;
             currentSection = section;
+            updateTitle();
             renderMandala();
-            updateBreadcrumb();
+            updateUrl();
         }
-        
+
         // 返回第一層
-        function goBackToLevel1() {
+        function goBack() {
             currentLevel = 1;
             currentSection = null;
+            updateTitle();
             renderMandala();
-            updateBreadcrumb();
+            updateUrl();
         }
-        
+
         // 更新內容
-        function updateContent(type, key, value) {
-            if (!currentProject || !projectData[currentProject]) return;
+        function updateContent(type, position, value) {
+            if (!currentProject) return;
+            
+            const project = projects[currentProject];
             
             if (type === 'center') {
-                projectData[currentProject].center.content = value;
-            } else if (type === 'section') {
-                if (!projectData[currentProject].sections[key]) {
-                    projectData[currentProject].sections[key] = { center: { content: '' }, details: {} };
+                if (currentLevel === 1) {
+                    project.level1.center.content = value;
+                } else {
+                    project.level2[currentSection].center.content = value;
                 }
-                projectData[currentProject].sections[key].center.content = value;
-            } else if (type === 'detail') {
-                const [section, detail] = key.split('.');
-                if (!projectData[currentProject].sections[section].details[detail]) {
-                    projectData[currentProject].sections[section].details[detail] = { content: '' };
+            } else {
+                if (currentLevel === 1) {
+                    project.level1.sections[position].content = value;
+                    // 同步到level2的center
+                    if (project.level2[position]) {
+                        project.level2[position].center.content = value;
+                    }
+                } else {
+                    project.level2[currentSection].sections[position].content = value;
                 }
-                projectData[currentProject].sections[section].details[detail].content = value;
             }
             
-            // 標記為需要同步
-            markProjectForSync(currentProject);
-            
-            // 自動儲存到本地
-            saveToLocalStorage();
+            saveProjects();
         }
-        
-        // 更新麵包屑
-        function updateBreadcrumb() {
-            const breadcrumb = document.getElementById('breadcrumb');
+
+        // 更新同步狀態
+        function updateSyncStatus(status) {
+            const indicator = document.getElementById('syncStatus');
+            indicator.className = `status-indicator status-${status}`;
+        }
+
+        // 更新URL
+        function updateUrl() {
+            let hash = '';
             if (currentProject) {
-                const config = PROJECT_CONFIG[currentProject];
-                let text = `${config.chapter} 系列 > ${currentProject} ${config.name}`;
-                if (currentLevel === 2) {
-                    text += ` > ${currentSection} 區域`;
+                hash = `#/mandala/${currentProject}`;
+                if (currentLevel === 2 && currentSection) {
+                    hash += `/${currentSection}`;
                 }
-                breadcrumb.textContent = text;
+            }
+            window.location.hash = hash;
+        }
+
+        // 檢查URL Hash
+        function checkUrlHash() {
+            const hash = window.location.hash;
+            if (hash.startsWith('#/mandala/')) {
+                const parts = hash.split('/');
+                const projectId = parts[2];
+                if (projects[projectId]) {
+                    selectProject(projectId);
+                    if (parts[3] && ['A','B','C','D','E','F','G','H'].includes(parts[3])) {
+                        enterLevel2(parts[3]);
+                    }
+                }
             }
         }
-        
-        // Sidebar 切換
+
+        // 切換側邊欄
         function toggleSidebar() {
-            sidebarVisible = !sidebarVisible;
-            updateSidebarVisibility();
-        }
-        
-        function updateSidebarVisibility() {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('mainContent');
             
-            if (window.innerWidth < 1024) {
-                // 移動設備
-                if (sidebarVisible) {
-                    sidebar.classList.remove('hidden');
-                } else {
-                    sidebar.classList.add('hidden');
-                }
+            sidebarCollapsed = !sidebarCollapsed;
+            
+            if (sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
                 mainContent.classList.add('expanded');
             } else {
-                // 桌面設備
-                if (sidebarVisible) {
-                    sidebar.classList.remove('hidden');
-                    mainContent.classList.remove('expanded');
-                } else {
-                    sidebar.classList.add('hidden');
-                    mainContent.classList.add('expanded');
-                }
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('expanded');
             }
         }
-        
-        // GitHub 功能
-        function showGitHubSetup() {
-            document.getElementById('githubModal').classList.remove('hidden');
-            document.getElementById('githubToken').value = githubToken;
-        }
-        
-        function closeGitHubModal() {
-            document.getElementById('githubModal').classList.add('hidden');
-        }
-        
-        function connectGitHub() {
-            const token = document.getElementById('githubToken').value.trim();
-            if (!token) {
-                alert('請輸入GitHub Personal Access Token');
-                return;
-            }
-            
-            githubToken = token;
-            localStorage.setItem('github_token', token);
-            
-            // 測試連接
-            testGitHubConnection().then(success => {
-                if (success) {
-                    updateGitHubStatus(true);
-                    closeGitHubModal();
-                    alert('GitHub連接成功！');
-                } else {
-                    alert('GitHub連接失敗，請檢查Token是否正確');
-                }
-            });
-        }
-        
-        async function testGitHubConnection() {
-            try {
-                const response = await fetch('https://api.github.com/user', {
-                    headers: {
-                        'Authorization': `token ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                return response.ok;
-            } catch (error) {
-                return false;
-            }
-        }
-        
-        function checkGitHubConnection() {
-            if (githubToken) {
-                testGitHubConnection().then(success => {
-                    updateGitHubStatus(success);
-                });
-            }
-        }
-        
-        function updateGitHubStatus(connected) {
-            const statusText = document.getElementById('githubStatusText');
-            const statusIcon = document.getElementById('githubSyncStatus');
-            
-            if (connected) {
-                statusText.textContent = '已連接GitHub';
-                statusIcon.className = 'sync-status synced';
-            } else {
-                statusText.textContent = '未連接GitHub';
-                statusIcon.className = 'sync-status offline';
-            }
-        }
-        
-        // 標記專案需要同步
-        function markProjectForSync(projectId) {
-            const projectItem = document.querySelector(`[data-project="${projectId}"] .sync-status`);
-            if (projectItem) {
-                projectItem.className = 'sync-status syncing';
-            }
-        }
-        
-        // 儲存專案
-        async function saveProject() {
+
+        // 匯出OPML
+        function exportOPML() {
             if (!currentProject) {
                 alert('請先選擇一個專案');
                 return;
             }
             
-            updateSyncStatus('syncing', '同步中...');
+            const project = projects[currentProject];
+            const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:]/g, '').replace('T', '_');
+            const filename = `mandala_${currentProject}_${timestamp}.opml`;
             
-            try {
-                // 保存到本地
-                saveToLocalStorage();
-                
-                // 如果有GitHub Token，同步到雲端
-                if (githubToken) {
-                    await saveProjectToCloud(currentProject);
-                    updateSyncStatus('synced', '已同步');
-                    updateProjectSyncStatus(currentProject, 'synced');
-                } else {
-                    updateSyncStatus('offline', '僅本機儲存');
-                }
-                
-                alert('專案已儲存');
-            } catch (error) {
-                console.error('儲存失敗:', error);
-                updateSyncStatus('error', '同步失敗');
-                alert('儲存失敗: ' + error.message);
-            }
+            const opml = generateOPML(project);
+            downloadFile(opml, filename, 'text/xml');
         }
-        
-        // 載入專案
-        async function loadProject() {
-            if (!currentProject) {
-                alert('請先選擇一個專案');
-                return;
-            }
-            
-            try {
-                if (githubToken) {
-                    // 從雲端載入
-                    await loadProjectFromCloud(currentProject);
-                    renderMandala();
-                    alert('已從雲端載入最新資料');
-                } else {
-                    // 從本地載入
-                    loadProjectsFromLocalStorage();
-                    renderMandala();
-                    alert('已從本機載入資料');
-                }
-            } catch (error) {
-                console.error('載入失敗:', error);
-                alert('載入失敗: ' + error.message);
-            }
-        }
-        
-        // 雲端儲存
-        async function saveProjectToCloud(projectId) {
-            const gistData = projectDataToOPML(projectId);
-            const gistId = localStorage.getItem(`gist_${projectId}`);
-            
-            const config = PROJECT_CONFIG[projectId];
-            const fileName = `mandala_${projectId}_${config.name}.opml`;
-            
-            const gistPayload = {
-                description: `曼陀羅專案: ${projectId} ${config.name}`,
-                files: {
-                    [fileName]: {
-                        content: gistData
-                    }
-                }
-            };
-            
-            let url = 'https://api.github.com/gists';
-            let method = 'POST';
-            
-            if (gistId) {
-                url = `https://api.github.com/gists/${gistId}`;
-                method = 'PATCH';
-            }
-            
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Authorization': `token ${githubToken}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(gistPayload)
-            });
-            
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            
-            if (!gistId) {
-                localStorage.setItem(`gist_${projectId}`, result.id);
-            }
-        }
-        
-        // 從雲端載入
-        async function loadProjectFromCloud(projectId) {
-            const gistId = localStorage.getItem(`gist_${projectId}`);
-            if (!gistId) return;
-            
-            try {
-                const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-                    headers: {
-                        'Authorization': `token ${githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                
-                if (!response.ok) return;
-                
-                const gist = await response.json();
-                const fileName = Object.keys(gist.files)[0];
-                const content = gist.files[fileName].content;
-                
-                // 解析OPML並更新專案數據
-                parseOPMLToProject(content, projectId);
-                updateProjectSyncStatus(projectId, 'synced');
-            } catch (error) {
-                console.error('從雲端載入失敗:', error);
-            }
-        }
-        
-        // 更新同步狀態
-        function updateSyncStatus(status, text) {
-            const statusIcon = document.getElementById('syncStatusIcon');
-            const statusText = document.getElementById('syncStatusText');
-            
-            statusIcon.className = `sync-status ${status}`;
-            statusText.textContent = text;
-        }
-        
-        // 更新專案同步狀態
-        function updateProjectSyncStatus(projectId, status) {
-            const projectItem = document.querySelector(`[data-project="${projectId}"] .sync-status`);
-            if (projectItem) {
-                projectItem.className = `sync-status ${status}`;
-            }
-        }
-        
-        // 本機儲存
-        function saveToLocalStorage() {
-            localStorage.setItem('mandala_projects', JSON.stringify(projectData));
-            localStorage.setItem('mandala_last_updated', new Date().toISOString());
-        }
-        
-        function loadProjectsFromLocalStorage() {
-            const saved = localStorage.getItem('mandala_projects');
-            if (saved) {
-                try {
-                    const loadedData = JSON.parse(saved);
-                    projectData = { ...projectData, ...loadedData };
-                } catch (error) {
-                    console.error('載入本機資料失敗:', error);
-                }
-            }
-        }
-        
-        // OPML 匯出/匯入
-        function exportCurrentOPML() {
-            if (!currentProject) {
-                alert('請先選擇一個專案');
-                return;
-            }
-            
-            const opmlContent = projectDataToOPML(currentProject);
-            const config = PROJECT_CONFIG[currentProject];
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
-            const fileName = `mandala_${currentProject}_${config.name}_${timestamp}.opml`;
-            
-            downloadFile(opmlContent, fileName);
-        }
-        
-        function projectDataToOPML(projectId) {
-            const config = PROJECT_CONFIG[projectId];
-            const data = projectData[projectId];
-            
+
+        // 生成OPML
+        function generateOPML(project) {
             let opml = `<?xml version="1.0" encoding="UTF-8"?>
 <opml version="2.0">
-    <head>
-        <title>曼陀羅專案: ${projectId} ${config.name}</title>
-    </head>
+    <head><title>${escapeXml(project.title)}</title></head>
     <body>
-        <outline text="中心: ${escapeXml(data.center?.content || '')}">`;
+        <outline text="中心: ${escapeXml(project.level1.center.content)}">`;
             
-            ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].forEach(letter => {
-                const section = data.sections?.[letter];
-                opml += `
-            <outline text="${letter}: ${escapeXml(section?.center?.content || '')}">`;
+            ['A','B','C','D','E','F','G','H'].forEach(letter => {
+                const section = project.level1.sections[letter];
+                const level2 = project.level2[letter];
                 
-                ['1', '2', '3', '4', '5', '6', '7', '8'].forEach(num => {
-                    const detail = section?.details?.[num];
+                opml += `
+            <outline text="${letter}: ${escapeXml(section.content)}">`;
+                
+                ['1','2','3','4','5','6','7','8'].forEach(num => {
+                    const cell = level2.sections[num];
                     opml += `
-                <outline text="${num}: ${escapeXml(detail?.content || '')}"/>`;
+                <outline text="${num}: ${escapeXml(cell.content)}"/>`;
                 });
                 
                 opml += `
@@ -1138,189 +721,214 @@
             
             return opml;
         }
-        
-        function parseOPMLToProject(opmlContent, projectId) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(opmlContent, 'text/xml');
-            
-            const rootOutline = doc.querySelector('body > outline');
-            if (!rootOutline) return;
-            
-            // 解析中心內容
-            const rootText = rootOutline.getAttribute('text') || '';
-            const centerContent = rootText.replace(/^中心:\s*/, '');
-            
-            if (!projectData[projectId]) {
-                projectData[projectId] = createEmptyMandala();
-            }
-            
-            projectData[projectId].center.content = centerContent;
-            
-            // 解析各區域
-            const sectionNodes = rootOutline.querySelectorAll(':scope > outline');
-            sectionNodes.forEach(sectionNode => {
-                const sectionText = sectionNode.getAttribute('text') || '';
-                const [letter, sectionContent] = sectionText.split(':');
-                const sectionKey = letter.trim();
-                
-                if (/^[A-H]$/.test(sectionKey)) {
-                    if (!projectData[projectId].sections[sectionKey]) {
-                        projectData[projectId].sections[sectionKey] = { center: { content: '' }, details: {} };
-                    }
-                    
-                    projectData[projectId].sections[sectionKey].center.content = (sectionContent || '').trim();
-                    
-                    // 解析詳細內容
-                    const detailNodes = sectionNode.querySelectorAll(':scope > outline');
-                    detailNodes.forEach(detailNode => {
-                        const detailText = detailNode.getAttribute('text') || '';
-                        const [num, detailContent] = detailText.split(':');
-                        const numKey = num.trim();
-                        
-                        if (/^[1-8]$/.test(numKey)) {
-                            if (!projectData[projectId].sections[sectionKey].details[numKey]) {
-                                projectData[projectId].sections[sectionKey].details[numKey] = { content: '' };
-                            }
-                            projectData[projectId].sections[sectionKey].details[numKey].content = (detailContent || '').trim();
-                        }
-                    });
-                }
-            });
-            
-            saveToLocalStorage();
+
+        // 下載檔案
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
         }
-        
-        function importOPML() {
-            document.getElementById('fileInput').click();
+
+        // XML轉義
+        function escapeXml(str) {
+            return (str || '').replace(/[&<>"']/g, s => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                "\"": "&quot;",
+                "'": "&apos;"
+            }[s]));
         }
-        
-        function handleFileImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
+
+        // 匯入OPML
+        function importOPML(file) {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = (e) => {
                 try {
-                    if (!currentProject) {
-                        alert('請先選擇一個專案進行匯入');
-                        return;
-                    }
+                    const xml = e.target.result;
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(xml, 'text/xml');
                     
-                    parseOPMLToProject(e.target.result, currentProject);
+                    // 解析OPML並更新當前專案
+                    parseOPML(doc);
                     renderMandala();
-                    alert('OPML 匯入成功！');
+                    alert('匯入成功！');
                 } catch (error) {
-                    alert('匯入失敗: 檔案格式不正確');
+                    alert('匯入失敗：檔案格式錯誤');
                 }
             };
             reader.readAsText(file);
         }
-        
-        // 清除功能
-        function clearCurrentLevel() {
+
+        // 解析OPML
+        function parseOPML(doc) {
             if (!currentProject) return;
             
-            let message = '';
-            if (currentLevel === 1) {
-                message = '確定要清除第一層的 A-H 區域內容嗎？（不包括各區域的詳細內容）';
-            } else {
-                message = `確定要清除 ${currentSection} 區域的 1-8 詳細內容嗎？（不包括區域中心）`;
-            }
+            const project = projects[currentProject];
+            const rootOutline = doc.querySelector('body > outline');
             
-            if (!confirm(message)) return;
-            
-            if (currentLevel === 1) {
-                // 清除 A-H 區域的中心內容
-                ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].forEach(letter => {
-                    if (projectData[currentProject].sections[letter]) {
-                        projectData[currentProject].sections[letter].center.content = '';
+            if (rootOutline) {
+                const rootText = rootOutline.getAttribute('text') || '';
+                const centerMatch = rootText.match(/^中心:\s*(.*)/) || rootText.match(/^(.*)$/);
+                project.level1.center.content = centerMatch ? centerMatch[1] : '';
+                
+                const sectionOutlines = rootOutline.querySelectorAll(':scope > outline');
+                sectionOutlines.forEach(outline => {
+                    const text = outline.getAttribute('text') || '';
+                    const match = text.match(/^([A-H]):\s*(.*)$/);
+                    
+                    if (match) {
+                        const letter = match[1];
+                        const content = match[2];
+                        
+                        project.level1.sections[letter].content = content;
+                        project.level2[letter].center.content = content;
+                        
+                        const cellOutlines = outline.querySelectorAll(':scope > outline');
+                        cellOutlines.forEach(cellOutline => {
+                            const cellText = cellOutline.getAttribute('text') || '';
+                            const cellMatch = cellText.match(/^([1-8]):\s*(.*)$/);
+                            
+                            if (cellMatch) {
+                                const num = cellMatch[1];
+                                const cellContent = cellMatch[2];
+                                project.level2[letter].sections[num].content = cellContent;
+                            }
+                        });
                     }
                 });
-            } else {
-                // 清除當前區域的 1-8 詳細內容
-                if (projectData[currentProject].sections[currentSection]) {
-                    ['1', '2', '3', '4', '5', '6', '7', '8'].forEach(num => {
-                        if (projectData[currentProject].sections[currentSection].details[num]) {
-                            projectData[currentProject].sections[currentSection].details[num].content = '';
-                        }
-                    });
-                }
             }
             
-            renderMandala();
-            saveToLocalStorage();
-            markProjectForSync(currentProject);
+            saveProjects();
         }
-        
-        function clearEntireMandala() {
+
+        // 清除功能
+        function clearCurrent() {
             if (!currentProject) return;
             
-            const config = PROJECT_CONFIG[currentProject];
-            const message = `⚠️ 確定要清除整個「${currentProject} ${config.name}」曼陀羅的所有內容嗎？\n\n此操作將清除：\n- 中心主題\n- 所有 A-H 區域內容\n- 所有詳細內容 (1-8)\n\n此操作無法復原！`;
+            const confirmMsg = currentLevel === 1 
+                ? '確定要清除第一層的 A-H 區域內容嗎？'
+                : `確定要清除 ${currentSection} 區域的 1-8 細節內容嗎？`;
             
-            if (!confirm(message)) return;
+            if (!confirm(confirmMsg)) return;
             
-            // 重置整個專案
-            projectData[currentProject] = createEmptyMandala();
+            const project = projects[currentProject];
             
+            if (currentLevel === 1) {
+                ['A','B','C','D','E','F','G','H'].forEach(letter => {
+                    project.level1.sections[letter].content = '';
+                    project.level2[letter].center.content = '';
+                });
+            } else {
+                ['1','2','3','4','5','6','7','8'].forEach(num => {
+                    project.level2[currentSection].sections[num].content = '';
+                });
+            }
+            
+            saveProjects();
             renderMandala();
-            saveToLocalStorage();
-            markProjectForSync(currentProject);
+        }
+
+        function clearAll() {
+            if (!currentProject) return;
             
-            alert('曼陀羅已清除完成');
+            if (!confirm('確定要清除整個曼陀羅的所有內容嗎？此操作無法復原！')) return;
+            
+            const project = projects[currentProject];
+            const newProject = JSON.parse(JSON.stringify(projectTemplate));
+            newProject.title = project.title;
+            
+            projects[currentProject] = newProject;
+            saveProjects();
+            renderMandala();
         }
-        
-        // 工具函數
-        function escapeXml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>"']/g, function(match) {
-                const escapeMap = {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&apos;'
-                };
-                return escapeMap[match];
-            });
+
+        // 綁定事件
+        function bindEvents() {
+            // 工具列按鈕
+            document.getElementById('toggleSidebar').onclick = toggleSidebar;
+            document.getElementById('saveBtn').onclick = saveProjects;
+            document.getElementById('loadBtn').onclick = () => location.reload();
+            document.getElementById('exportBtn').onclick = exportOPML;
+            document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+            document.getElementById('githubBtn').onclick = () => document.getElementById('githubModal').classList.add('show');
+            
+            // 專案標題更新
+            document.getElementById('projectTitle').onchange = function() {
+                if (currentProject) {
+                    projects[currentProject].title = this.value;
+                    saveProjects();
+                    renderProjectList();
+                    updateTitle();
+                }
+            };
+            
+            // 檔案匯入
+            document.getElementById('importFile').onchange = function() {
+                if (this.files[0]) {
+                    importOPML(this.files[0]);
+                }
+            };
+            
+            // 編輯區按鈕
+            document.getElementById('backBtn').onclick = goBack;
+            document.getElementById('clearCurrentBtn').onclick = clearCurrent;
+            document.getElementById('clearAllBtn').onclick = clearAll;
+            
+            // 專案列表點擊
+            document.getElementById('projectList').onclick = function(e) {
+                const item = e.target.closest('.project-item');
+                if (item) {
+                    selectProject(item.dataset.id);
+                }
+            };
+            
+            // GitHub 模態框
+            document.getElementById('saveGithubBtn').onclick = function() {
+                githubToken = document.getElementById('githubToken').value;
+                localStorage.setItem('githubToken', githubToken);
+                document.getElementById('githubModal').classList.remove('show');
+                alert('GitHub 設定已儲存');
+            };
+            
+            document.getElementById('cancelGithubBtn').onclick = function() {
+                document.getElementById('githubModal').classList.remove('show');
+            };
+            
+            // 新建專案
+            document.getElementById('newProjectBtn').onclick = function() {
+                const name = prompt('請輸入專案名稱：');
+                if (name) {
+                    const id = 'custom_' + Date.now();
+                    projects[id] = {
+                        ...JSON.parse(JSON.stringify(projectTemplate)),
+                        title: name
+                    };
+                    saveProjects();
+                    renderProjectList();
+                    selectProject(id);
+                }
+            };
+            
+            // URL變化監聽
+            window.onhashchange = checkUrlHash;
         }
-        
-        function downloadFile(content, fileName) {
-            const blob = new Blob([content], { type: 'text/xml' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-        
-        // 固定網址部署相關
-        function showDeployModal() {
-            document.getElementById('deployModal').classList.remove('hidden');
-        }
-        
-        function closeDeployModal() {
-            document.getElementById('deployModal').classList.add('hidden');
-        }
-        
-        function downloadHTML() {
-            // 獲取當前頁面的HTML內容
-            const htmlContent = document.documentElement.outerHTML;
-            downloadFile(htmlContent, 'mandala_system.html');
-            alert('HTML檔案已下載，您可以部署到任何伺服器獲得固定網址！');
-        }
+
+        // 頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', init);
     </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"9789df3c5ef47d1b","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.8.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"978a36df9cf78f1f","serverTiming":{"name":{"cfExtPri":true,"cfEdge":true,"cfOrigin":true,"cfL4":true,"cfSpeedBrain":true,"cfCacheStatus":true}},"version":"2025.8.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
 </body>
 </html>
     <script id="html_badge_script1">
         window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDpSqVKo6qAeAi7LETwLVXyDZMHIMjbI1ka%2FPLM0saSZwTcot2Wy1haxSSPhHmIn5WZWBTwmuXGsVNR7ZvPVLkjY%2FY4ZvZnw6IZjGi4zVwtp89B05hXGOVuDYOIMwDk37JSMlSXj4Xah0UOkEHV1hZsk32Go5DUpNucxpNR0fVhWa6gxD49jyFfUNvAGie87agei6l7px68ExTf1JG1h5N%2FkBhdHEPrc%2FtkcpNayn0M4BJ86yLVp0c7CyE2PUf%2FM0WCLkRdg9bw5QbQR6W37BVKGuhgUksid0CsSNJmbwAfrFnhPEfNXGM7q2Rs8k04f4pGaps40gApJBcKnoEb%2FBEIY4OnSzsqOSeKZWi8O3drpOXQVcauIHRf3RxzSkUpLCnb3ikqyYKTTmqllNCUzMcJ3T8nJ%2FXGKa2N7qZDS7yNGrR%2B4IJyXMDrVwy5e%2BrpU80X5%2B7PHqjX%2Bl8lJEmyVZa%2FIky3ofKRadhqRHxRsphPg9iYJwQMQ74lz4fsN98dXl%2B1G967mGeLXXmfRshSloNOM%3D";
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDsZnTL85%2BaHbtcL5c%2FWy%2BQ4kl8C63J8O8ASnq27YxBkI7DqtL4%2FdI5xdzMfWAwfvPIXGV%2F3c7sz3Oh1%2BDkp0D17abWgShx5l9aDyZKj0t9Ym3LtY4o%2Byz3On2CrWijo0O%2BK1vh5mFTN8%2F5AQvE6m5vPy1OTwrF%2BpFiZjY9%2BexxYW5jXzHqPzhF7mZyjw7kQx0FLIUnCkbRR1%2FyvMCm0LSJXX%2B2%2BQ8F7B0GxKmRkY0SipX1peRjN88XL6Edw6fdmHyQ2y2NAHSnNnC2aHEmQz9kY0s9vhR1h8npEtnyMfK1%2BwjpZUmmAmrpUF5MWHr1vXWMS71l%2FUpmmfXE6PKyYMrtMms%2FK57yZ86ntZoqqHKH1K54ngREhfz4KDBoPRKf1PDxHjew3ULOklgz68pZJXC%2FUZ5y0glL9ym%2F2MTVjdVVTFU3GKEFOqIG7qmlktQYBDekeKlfAQ5tZTKE0Zhgb1Hw7AwtSqu%2B7EQdsQOfREf8c%2BwBoKmjAEQkp54AJALMfJ1rP1Uu1YF%2FpSw6YcV9NCVUc%3D";
         window.__genspark_locale = "zh-TW";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDpSqVKo6qAeAi7LETwLVXyDZMHIMjbI1ka/PLM0saSZwTcot2Wy1haxSSPhHmIn5WZWBTwmuXGsVNR7ZvPVLkjY/Y4ZvZnw6IZjGi4zVwtp89B05hXGOVuDYOIMwDk37JSMlSXj4Xah0UOkEHV1hZsk32Go5DUpNucxpNR0fVhWa6gxD49jyFfUNvAGie87agei6l7px68ExTf1JG1h5N/kBhdHEPrc/tkcpNayn0M4BJ86yLVp0c7CyE2PUf/M0WCLkRdg9bw5QbQR6W37BVKGuhgUksid0CsSNJmbwAfrFnhPEfNXGM7q2Rs8k04f4pGaps40gApJBcKnoEb/BEIY4OnSzsqOSeKZWi8O3drpOXQVcauIHRf3RxzSkUpLCnb3ikqyYKTTmqllNCUzMcJ3T8nJ/XGKa2N7qZDS7yNGrR+4IJyXMDrVwy5e+rpU80X5+7PHqjX+l8lJEmyVZa/Iky3ofKRadhqRHxRsphPg9iYJwQMQ74lz4fsN98dXl+1G967mGeLXXmfRshSloNOM=";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDsZnTL85+aHbtcL5c/Wy+Q4kl8C63J8O8ASnq27YxBkI7DqtL4/dI5xdzMfWAwfvPIXGV/3c7sz3Oh1+Dkp0D17abWgShx5l9aDyZKj0t9Ym3LtY4o+yz3On2CrWijo0O+K1vh5mFTN8/5AQvE6m5vPy1OTwrF+pFiZjY9+exxYW5jXzHqPzhF7mZyjw7kQx0FLIUnCkbRR1/yvMCm0LSJXX+2+Q8F7B0GxKmRkY0SipX1peRjN88XL6Edw6fdmHyQ2y2NAHSnNnC2aHEmQz9kY0s9vhR1h8npEtnyMfK1+wjpZUmmAmrpUF5MWHr1vXWMS71l/UpmmfXE6PKyYMrtMms/K57yZ86ntZoqqHKH1K54ngREhfz4KDBoPRKf1PDxHjew3ULOklgz68pZJXC/UZ5y0glL9ym/2MTVjdVVTFU3GKEFOqIG7qmlktQYBDekeKlfAQ5tZTKE0Zhgb1Hw7AwtSqu+7EQdsQOfREf8c+wBoKmjAEQkp54AJALMfJ1rP1Uu1YF/pSw6YcV9NCVUc=";
     </script>
     
     <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
