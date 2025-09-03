@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>曼陀羅專案管理系統 v3.4 - 字體調整版</title>
+    <title>曼陀羅專案管理系統 v3.6 - 終極完整版</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
@@ -252,6 +252,7 @@
             border-radius: 3px;
             margin-bottom: 1px;
             transition: background-color 0.2s;
+            position: relative;
         }
 
         .project-item:hover {
@@ -262,6 +263,17 @@
             background: #dbeafe;
             color: #1d4ed8;
             font-weight: 600;
+        }
+
+        /* 確保點擊區域覆蓋整個項目 */
+        .project-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
         }
 
         .sync-status {
@@ -276,6 +288,8 @@
         .sync-status.synced { color: #059669; }
         .sync-status.error { color: #dc2626; }
         .sync-status.offline { color: #6b7280; }
+        .sync-status.auto-save { color: #f59e0b; }
+        .sync-status.auto-upload { color: #8b5cf6; }
 
         .toggle-sidebar {
             position: absolute;
@@ -356,6 +370,15 @@
             margin-right: 8px;
         }
 
+        .form-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+        }
+
         /* 子層格子樣式 */
         .grid-cell.sub-layer {
             background: #fef3c7;
@@ -368,6 +391,29 @@
 
         .grid-cell.sub-center:hover {
             background: #86efac;
+        }
+
+        /* TheBrain 優化指示器 */
+        .thebrain-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .thebrain-indicator.show {
+            opacity: 1;
+        }
+
+        .thebrain-indicator.auto-upload {
+            background: #8b5cf6;
         }
 
         /* 響應式設計 */
@@ -422,6 +468,11 @@
     </style>
 </head>
 <body>
+    <!-- TheBrain 優化指示器 -->
+    <div class="thebrain-indicator" id="thebrainIndicator">
+        <i class="fas fa-save"></i> 自動儲存中...
+    </div>
+
     <div class="main-container font-size-medium" id="mainContainer">
         <div class="sidebar" id="sidebar">
             <div class="project-list" id="projectList">
@@ -626,6 +677,26 @@
                         Enter鍵自動加前綴，Shift+Enter純換行，Ctrl/Cmd+;插入日期
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" class="form-checkbox" id="autoUploadToggle">
+                        <span class="form-label" style="display: inline;">啟用自動上傳</span>
+                    </label>
+                    <div style="font-size: 10px; color: #6b7280; margin-top: 4px;">
+                        定時自動上傳到 GitHub，避免手動操作
+                    </div>
+                </div>
+                <div class="form-group" id="autoUploadIntervalGroup" style="display: none;">
+                    <label class="form-label">自動上傳間隔</label>
+                    <select class="form-select" id="autoUploadInterval">
+                        <option value="5">每 5 分鐘</option>
+                        <option value="10" selected>每 10 分鐘</option>
+                        <option value="30">每 30 分鐘</option>
+                    </select>
+                    <div style="font-size: 10px; color: #6b7280; margin-top: 4px;">
+                        僅在有內容變更時才會上傳
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button onclick="closeGitHubModal()">取消</button>
@@ -639,6 +710,105 @@
     <input type="file" id="importOPMLInput" accept=".opml,.xml" style="display: none;" onchange="handleOPMLImport(this)">
 
     <script>
+        // 🎯 終極版本重點：自動定時上傳 + 完全修復左側選單
+        
+        // 全域儲存管理器
+        const StorageManager = {
+            // 多重儲存鍵值
+            keys: {
+                primary: 'mandala_data_v2',
+                backup: 'mandala_backup_v2',
+                session: 'mandala_session_v2'
+            },
+            
+            // 儲存重試次數
+            maxRetries: 3,
+            
+            // 儲存到多個位置
+            save: function(data, showIndicator = true) {
+                const jsonData = JSON.stringify(data);
+                let savedCount = 0;
+                
+                if (showIndicator) {
+                    this.showSaveIndicator();
+                }
+                
+                // 主要儲存 (localStorage)
+                try {
+                    localStorage.setItem(this.keys.primary, jsonData);
+                    savedCount++;
+                } catch (e) {
+                    console.warn('主要儲存失敗:', e);
+                }
+                
+                // 備份儲存 (localStorage)
+                try {
+                    localStorage.setItem(this.keys.backup, jsonData);
+                    savedCount++;
+                } catch (e) {
+                    console.warn('備份儲存失敗:', e);
+                }
+                
+                // 會話儲存 (sessionStorage)
+                try {
+                    sessionStorage.setItem(this.keys.session, jsonData);
+                    savedCount++;
+                } catch (e) {
+                    console.warn('會話儲存失敗:', e);
+                }
+                
+                console.log(`終極版儲存: ${savedCount}/3 儲存位置成功`);
+                return savedCount > 0;
+            },
+            
+            // 從多個位置載入
+            load: function() {
+                const sources = [
+                    () => localStorage.getItem(this.keys.primary),
+                    () => localStorage.getItem(this.keys.backup),
+                    () => sessionStorage.getItem(this.keys.session)
+                ];
+                
+                for (let i = 0; i < sources.length; i++) {
+                    try {
+                        const raw = sources[i]();
+                        if (raw) {
+                            const data = JSON.parse(raw);
+                            console.log(`從第 ${i + 1} 個位置載入資料成功`);
+                            return data;
+                        }
+                    } catch (e) {
+                        console.warn(`第 ${i + 1} 個位置載入失敗:`, e);
+                    }
+                }
+                
+                console.log('所有儲存位置都無法載入資料');
+                return null;
+            },
+            
+            // 顯示儲存指示器
+            showSaveIndicator: function() {
+                const indicator = document.getElementById('thebrainIndicator');
+                indicator.classList.remove('auto-upload');
+                indicator.innerHTML = '<i class="fas fa-save"></i> 自動儲存中...';
+                indicator.classList.add('show');
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 2000);
+            },
+
+            // 顯示上傳指示器
+            showUploadIndicator: function() {
+                const indicator = document.getElementById('thebrainIndicator');
+                indicator.classList.add('auto-upload');
+                indicator.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> 自動上傳中...';
+                indicator.classList.add('show');
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 3000);
+            }
+        };
+
         // 🎯 修復重點：先解析 URL 參數再初始化
         function parseUrlParams() {
             const params = new URLSearchParams(window.location.search);
@@ -662,10 +832,128 @@
             gistId: urlParams.gist || localStorage.getItem('gist_id') || null,
             token: localStorage.getItem('github_token') || '',
             noteMode: localStorage.getItem('note_mode') === 'true',
-            fontSize: localStorage.getItem('font_size') || 'medium'  // 新增字體大小設定
+            fontSize: localStorage.getItem('font_size') || 'medium',  // 字體大小設定
+            autoSaveInterval: null,  // 自動儲存計時器
+            autoUploadInterval: null,  // 🎯 新增：自動上傳計時器
+            autoUploadEnabled: localStorage.getItem('auto_upload_enabled') === 'true',  // 🎯 新增：是否啟用自動上傳
+            autoUploadIntervalMinutes: parseInt(localStorage.getItem('auto_upload_interval')) || 10,  // 🎯 新增：上傳間隔
+            lastSaveTime: Date.now(),  // 最後儲存時間
+            lastUploadTime: Date.now(),  // 🎯 新增：最後上傳時間
+            lastDataHash: null  // 🎯 新增：用於檢測資料變更
         };
 
-        console.log('初始專案設定:', app.currentProject, '初始層級:', app.currentLayer);
+        console.log('🎯 終極版初始化 - 專案:', app.currentProject, '層級:', app.currentLayer);
+
+        // 計算資料雜湊值，用於檢測變更
+        function calculateDataHash(data) {
+            return JSON.stringify(data).split('').reduce((a, b) => {
+                a = ((a << 5) - a) + b.charCodeAt(0);
+                return a & a;
+            }, 0);
+        }
+
+        // 🎯 新增：自動上傳管理器
+        const AutoUploadManager = {
+            start: function() {
+                if (!app.autoUploadEnabled || !app.token) {
+                    console.log('自動上傳未啟用或無 Token');
+                    return;
+                }
+
+                if (app.autoUploadInterval) {
+                    clearInterval(app.autoUploadInterval);
+                }
+
+                const intervalMs = app.autoUploadIntervalMinutes * 60 * 1000;
+                console.log(`啟動自動上傳，間隔: ${app.autoUploadIntervalMinutes} 分鐘`);
+
+                app.autoUploadInterval = setInterval(async () => {
+                    if (!app.data) return;
+
+                    // 計算當前資料雜湊值
+                    const currentHash = calculateDataHash(app.data);
+                    
+                    // 如果資料沒有變更，跳過上傳
+                    if (app.lastDataHash === currentHash) {
+                        console.log('資料無變更，跳過自動上傳');
+                        return;
+                    }
+
+                    console.log('檢測到資料變更，開始自動上傳...');
+                    StorageManager.showUploadIndicator();
+                    setSyncStatus('auto-upload', '自動上傳中...');
+
+                    try {
+                        await this.performAutoUpload();
+                        app.lastDataHash = currentHash;
+                        app.lastUploadTime = Date.now();
+                        console.log('✅ 自動上傳成功');
+                    } catch (error) {
+                        console.error('❌ 自動上傳失敗:', error);
+                        setSyncStatus('error', '自動上傳失敗');
+                        setTimeout(() => {
+                            setSyncStatus('synced', '已連接');
+                        }, 3000);
+                    }
+                }, intervalMs);
+            },
+
+            stop: function() {
+                if (app.autoUploadInterval) {
+                    clearInterval(app.autoUploadInterval);
+                    app.autoUploadInterval = null;
+                    console.log('自動上傳已停止');
+                }
+            },
+
+            performAutoUpload: async function() {
+                if (!app.token || !app.data) {
+                    throw new Error('缺少 Token 或資料');
+                }
+
+                const dataToSave = {
+                    ...app.data,
+                    updatedAt: new Date().toISOString()
+                };
+
+                const body = {
+                    description: `曼陀羅專案管理系統資料 - ${app.currentProject} (自動上傳)`,
+                    public: false,
+                    files: {
+                        'mandala_data.json': {
+                            content: JSON.stringify(dataToSave, null, 2)
+                        }
+                    }
+                };
+
+                const isCreate = !app.gistId;
+                const url = isCreate ? 'https://api.github.com/gists' : `https://api.github.com/gists/${app.gistId}`;
+                const method = isCreate ? 'POST' : 'PATCH';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `token ${app.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (isCreate) {
+                        app.gistId = result.id;
+                        localStorage.setItem('gist_id', app.gistId);
+                    }
+                    setSyncStatus('synced', '自動同步');
+                    setTimeout(() => {
+                        setSyncStatus('synced', '已連接');
+                    }, 2000);
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+            }
+        };
 
         // 字體大小控制函數
         function setFontSize(size) {
@@ -720,13 +1008,15 @@
             });
 
             return {
-                version: '2.0',
+                version: '2.2',  // 版本升級到終極版
                 updatedAt: new Date().toISOString(),
                 meta: {
-                    activeProject: app.currentProject,  // 🎯 修復：使用當前專案
+                    activeProject: app.currentProject,
                     noteMode: app.noteMode,
                     fontSize: app.fontSize,
-                    schema: 'mandala-v2.0'
+                    autoUpload: app.autoUploadEnabled,
+                    autoUploadInterval: app.autoUploadIntervalMinutes,
+                    schema: 'mandala-ultimate-v2.2'  // 終極版本標記
                 },
                 projects: projects
             };
@@ -756,29 +1046,51 @@
                 return newData;
             }
             
-            // 新增字體大小設定的遷移
-            if (data.meta && data.meta.fontSize) {
-                app.fontSize = data.meta.fontSize;
-                localStorage.setItem('font_size', app.fontSize);
+            // 新增功能設定的遷移
+            if (data.meta) {
+                if (data.meta.fontSize) {
+                    app.fontSize = data.meta.fontSize;
+                    localStorage.setItem('font_size', app.fontSize);
+                }
+                if (data.meta.autoUpload !== undefined) {
+                    app.autoUploadEnabled = data.meta.autoUpload;
+                    localStorage.setItem('auto_upload_enabled', app.autoUploadEnabled);
+                }
+                if (data.meta.autoUploadInterval) {
+                    app.autoUploadIntervalMinutes = data.meta.autoUploadInterval;
+                    localStorage.setItem('auto_upload_interval', app.autoUploadIntervalMinutes);
+                }
+            }
+            
+            // 升級到終極版本
+            if (!data.meta.schema || !data.meta.schema.includes('ultimate')) {
+                data.version = '2.2';
+                data.meta.schema = 'mandala-ultimate-v2.2';
+                data.meta.autoUpload = app.autoUploadEnabled;
+                data.meta.autoUploadInterval = app.autoUploadIntervalMinutes;
+                console.log('升級到終極版本');
             }
             
             return data;
         }
 
-        // 初始化
+        // 🎯 終極版：強化的資料初始化
         function initData() {
-            console.log('正在初始化資料...當前專案:', app.currentProject);
-            const raw = localStorage.getItem('mandala_data_v2') || localStorage.getItem('mandala_data');
-            if (raw) {
+            console.log('🎯 終極版：正在初始化資料...當前專案:', app.currentProject);
+            
+            // 嘗試從多個儲存位置載入
+            const loadedData = StorageManager.load();
+            
+            if (loadedData) {
                 try {
-                    app.data = migrateToV2(JSON.parse(raw));
-                    console.log('資料載入成功:', app.data);
+                    app.data = migrateToV2(loadedData);
+                    console.log('✅ 終極版：資料載入成功');
                 } catch (e) {
-                    console.error('資料載入失敗:', e);
+                    console.error('❌ 資料載入失敗:', e);
                     app.data = createEmptyData();
                 }
             } else {
-                console.log('建立新的空白資料');
+                console.log('🆕 建立新的空白資料');
                 app.data = createEmptyData();
             }
             
@@ -788,6 +1100,39 @@
             // 🎯 修復：確保載入正確的專案
             console.log('載入專案:', app.currentProject);
             loadProject(app.currentProject, false); // 不更新 URL
+            
+            // 🎯 終極版：啟動自動儲存和自動上傳
+            startAutoSave();
+            if (app.autoUploadEnabled && app.token) {
+                AutoUploadManager.start();
+            }
+
+            // 計算初始資料雜湊值
+            app.lastDataHash = calculateDataHash(app.data);
+        }
+
+        // 🎯 終極版：自動儲存機制
+        function startAutoSave() {
+            // 每10秒自動儲存一次
+            if (app.autoSaveInterval) {
+                clearInterval(app.autoSaveInterval);
+            }
+            
+            app.autoSaveInterval = setInterval(() => {
+                if (Date.now() - app.lastSaveTime > 8000) { // 8秒內沒有手動儲存才自動儲存
+                    saveToStorage(false); // 不顯示指示器的自動儲存
+                    setSyncStatus('auto-save', '自動儲存');
+                    setTimeout(() => {
+                        if (app.token) {
+                            setSyncStatus('synced', '已連接');
+                        } else {
+                            setSyncStatus('offline', '離線');
+                        }
+                    }, 1000);
+                }
+            }, 10000);
+            
+            console.log('🎯 終極版：自動儲存已啟動');
         }
 
         // 載入專案 - 🎯 修復：新增 updateUrl 參數
@@ -941,46 +1286,76 @@
             syncUrl(true);
         }
 
-        // 綁定文字框事件
+        // 🎯 終極版：強化的文字框事件綁定
         function bindTextareaEvents() {
             document.querySelectorAll('.cell-content').forEach(textarea => {
-                // 輸入事件
+                // 🎯 終極版：更頻繁的即時儲存
                 textarea.addEventListener('input', function() {
                     const cell = this.getAttribute('data-cell');
                     if (cell && app.data.projects[app.currentProject]) {
                         app.data.projects[app.currentProject].cells[cell] = this.value;
                         
-                        // 防抖自動儲存
+                        // 🎯 終極版：立即儲存到 sessionStorage
+                        try {
+                            sessionStorage.setItem(StorageManager.keys.session, JSON.stringify(app.data));
+                        } catch (e) {
+                            console.warn('即時儲存失敗:', e);
+                        }
+                        
+                        // 🎯 終極版：減少防抖時間（從800ms降到300ms）
                         clearTimeout(this.saveTimeout);
                         this.saveTimeout = setTimeout(() => {
-                            saveToLocalStorage();
-                        }, 800);
+                            saveToStorage(true);
+                        }, 300);
                     }
                 });
 
-                // 筆記模式鍵盤事件
+                // 🎯 終極版：鍵盤事件也觸發儲存
                 textarea.addEventListener('keydown', function(e) {
-                    if (!app.noteMode) return;
-                    
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        const pos = this.selectionStart;
-                        const value = this.value;
-                        const newValue = value.substring(0, pos) + '\n- ' + value.substring(this.selectionEnd);
-                        this.value = newValue;
-                        this.selectionStart = this.selectionEnd = pos + 3;
-                        this.dispatchEvent(new Event('input'));
+                    // 筆記模式處理
+                    if (app.noteMode) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            const pos = this.selectionStart;
+                            const value = this.value;
+                            const newValue = value.substring(0, pos) + '\n- ' + value.substring(this.selectionEnd);
+                            this.value = newValue;
+                            this.selectionStart = this.selectionEnd = pos + 3;
+                            this.dispatchEvent(new Event('input'));
+                        }
+                        
+                        if (e.key === ';' && (e.ctrlKey || e.metaKey)) {
+                            e.preventDefault();
+                            const pos = this.selectionStart;
+                            const date = new Date().toISOString().split('T')[0];
+                            const value = this.value;
+                            const newValue = value.substring(0, pos) + date + value.substring(this.selectionEnd);
+                            this.value = newValue;
+                            this.selectionStart = this.selectionEnd = pos + date.length;
+                            this.dispatchEvent(new Event('input'));
+                        }
                     }
                     
-                    if (e.key === ';' && (e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        const pos = this.selectionStart;
-                        const date = new Date().toISOString().split('T')[0];
-                        const value = this.value;
-                        const newValue = value.substring(0, pos) + date + value.substring(this.selectionEnd);
-                        this.value = newValue;
-                        this.selectionStart = this.selectionEnd = pos + date.length;
-                        this.dispatchEvent(new Event('input'));
+                    // 🎯 終極版：特殊鍵觸發立即儲存
+                    if (e.key === 'Enter' || e.key === 'Tab' || (e.ctrlKey && e.key === 's')) {
+                        if (e.ctrlKey && e.key === 's') {
+                            e.preventDefault();
+                        }
+                        // 立即儲存
+                        const cell = this.getAttribute('data-cell');
+                        if (cell && app.data.projects[app.currentProject]) {
+                            app.data.projects[app.currentProject].cells[cell] = this.value;
+                            saveToStorage(true);
+                        }
+                    }
+                });
+
+                // 🎯 終極版：失去焦點時立即儲存
+                textarea.addEventListener('blur', function() {
+                    const cell = this.getAttribute('data-cell');
+                    if (cell && app.data.projects[app.currentProject]) {
+                        app.data.projects[app.currentProject].cells[cell] = this.value;
+                        saveToStorage(false); // 不顯示指示器
                     }
                 });
             });
@@ -1021,36 +1396,59 @@
             }
         }
 
-        // 儲存到 LocalStorage
-        function saveToLocalStorage() {
+        // 🎯 終極版：強化的儲存函數
+        function saveToStorage(showIndicator = true) {
+            if (!app.data) return false;
+            
             app.data.updatedAt = new Date().toISOString();
-            app.data.meta.fontSize = app.fontSize;  // 儲存字體大小設定
-            localStorage.setItem('mandala_data_v2', JSON.stringify(app.data));
+            app.data.meta.fontSize = app.fontSize;
+            app.data.meta.autoUpload = app.autoUploadEnabled;
+            app.data.meta.autoUploadInterval = app.autoUploadIntervalMinutes;
+            app.lastSaveTime = Date.now();
+            
+            const success = StorageManager.save(app.data, showIndicator);
+            
+            if (success) {
+                console.log('🎯 終極版：多重儲存成功');
+            } else {
+                console.error('❌ 所有儲存位置都失敗');
+            }
+            
+            return success;
+        }
+
+        // 相容性：保持原有函數名稱
+        function saveToLocalStorage() {
+            return saveToStorage(true);
         }
 
         // 本地儲存
         function saveLocal() {
-            saveToLocalStorage();
-            setSyncStatus('synced', '已儲存');
-            setTimeout(() => {
-                if (app.token) {
-                    setSyncStatus('synced', '已連接');
-                } else {
-                    setSyncStatus('offline', '離線');
-                }
-            }, 1500);
+            const success = saveToStorage(true);
+            if (success) {
+                setSyncStatus('synced', '已儲存');
+                setTimeout(() => {
+                    if (app.token) {
+                        setSyncStatus('synced', '已連接');
+                    } else {
+                        setSyncStatus('offline', '離線');
+                    }
+                }, 1500);
+            } else {
+                setSyncStatus('error', '儲存失敗');
+            }
         }
 
         // 本地載入
         function loadLocal() {
-            const raw = localStorage.getItem('mandala_data_v2');
-            if (!raw) {
+            const loadedData = StorageManager.load();
+            if (!loadedData) {
                 alert('找不到本地備份資料');
                 return;
             }
             
             try {
-                app.data = migrateToV2(JSON.parse(raw));
+                app.data = migrateToV2(loadedData);
                 loadProject(app.currentProject);
                 alert('本地資料載入成功');
             } catch (e) {
@@ -1085,7 +1483,7 @@
                 try {
                     const data = JSON.parse(e.target.result);
                     app.data = migrateToV2(data);
-                    saveToLocalStorage();
+                    saveToStorage(true);
                     loadProject(app.currentProject);
                     alert('JSON 匯入成功');
                 } catch (error) {
@@ -1106,7 +1504,7 @@
     <head>
         <title>曼陀羅專案: ${project.title}</title>
         <dateCreated>${timestamp}</dateCreated>
-        <generator>曼陀羅專案管理系統 v3.4</generator>
+        <generator>曼陀羅專案管理系統 v3.6 - 終極完整版</generator>
     </head>
     <body>
         <outline text="中心主題: ${escapeXml(project.cells.CENTER)}">`;
@@ -1206,7 +1604,7 @@
                         }
                     });
                     
-                    saveToLocalStorage();
+                    saveToStorage(true);
                     if (app.currentLayer === 'main') {
                         renderMainLayer();
                     } else {
@@ -1249,7 +1647,7 @@
                 };
 
                 const body = {
-                    description: `曼陀羅專案管理系統資料 - ${app.currentProject}`,
+                    description: `曼陀羅專案管理系統資料 - ${app.currentProject} (終極版)`,
                     public: false,
                     files: {
                         'mandala_data.json': {
@@ -1275,8 +1673,12 @@
                     const result = await response.json();
                     app.gistId = result.id;
                     localStorage.setItem('gist_id', app.gistId);
-                    saveToLocalStorage();
+                    saveToStorage(true);
                     setSyncStatus('synced', '已同步');
+                    
+                    // 更新資料雜湊值
+                    app.lastDataHash = calculateDataHash(app.data);
+                    app.lastUploadTime = Date.now();
                     
                     // 顯示分享資訊
                     const shareUrl = `${window.location.origin}${window.location.pathname}?gist=${app.gistId}`;
@@ -1287,7 +1689,7 @@
             } catch (error) {
                 console.error('上傳失敗:', error);
                 setSyncStatus('error', '上傳失敗');
-                saveToLocalStorage(); // 本地備份
+                saveToStorage(true); // 本地備份
                 alert('上傳失敗: ' + error.message);
             }
         }
@@ -1328,7 +1730,10 @@
                     app.data = migrateToV2(data);
                     app.gistId = gistId;
                     localStorage.setItem('gist_id', gistId);
-                    saveToLocalStorage();
+                    saveToStorage(true);
+                    
+                    // 更新資料雜湊值
+                    app.lastDataHash = calculateDataHash(app.data);
                     
                     loadProject(app.currentProject);
                     setSyncStatus('synced', '已同步');
@@ -1389,7 +1794,7 @@
                 }
             });
             
-            saveToLocalStorage();
+            saveToStorage(true);
             if (app.currentLayer === 'main') {
                 renderMainLayer();
             } else {
@@ -1406,7 +1811,7 @@
                 project.cells[cell] = '';
             });
             
-            saveToLocalStorage();
+            saveToStorage(true);
             if (app.currentLayer === 'main') {
                 renderMainLayer();
             } else {
@@ -1432,6 +1837,13 @@
             document.getElementById('githubToken').value = app.token;
             document.getElementById('gistId').value = app.gistId || '';
             document.getElementById('noteModeToggle').checked = app.noteMode;
+            document.getElementById('autoUploadToggle').checked = app.autoUploadEnabled;
+            document.getElementById('autoUploadInterval').value = app.autoUploadIntervalMinutes;
+            
+            // 根據自動上傳開關顯示/隱藏間隔設定
+            const intervalGroup = document.getElementById('autoUploadIntervalGroup');
+            intervalGroup.style.display = app.autoUploadEnabled ? 'block' : 'none';
+            
             document.getElementById('githubModal').style.display = 'block';
         }
 
@@ -1443,6 +1855,8 @@
             app.token = document.getElementById('githubToken').value.trim();
             app.gistId = document.getElementById('gistId').value.trim() || null;
             app.noteMode = document.getElementById('noteModeToggle').checked;
+            app.autoUploadEnabled = document.getElementById('autoUploadToggle').checked;
+            app.autoUploadIntervalMinutes = parseInt(document.getElementById('autoUploadInterval').value);
             
             if (app.token) {
                 localStorage.setItem('github_token', app.token);
@@ -1459,38 +1873,128 @@
             }
             
             localStorage.setItem('note_mode', app.noteMode);
+            localStorage.setItem('auto_upload_enabled', app.autoUploadEnabled);
+            localStorage.setItem('auto_upload_interval', app.autoUploadIntervalMinutes);
+            
+            // 更新 app.data 中的設定
             app.data.meta.noteMode = app.noteMode;
-            saveToLocalStorage();
+            app.data.meta.autoUpload = app.autoUploadEnabled;
+            app.data.meta.autoUploadInterval = app.autoUploadIntervalMinutes;
+            saveToStorage(true);
+            
+            // 🎯 新增：管理自動上傳
+            if (app.autoUploadEnabled && app.token) {
+                console.log('啟動自動上傳功能');
+                AutoUploadManager.start();
+            } else {
+                console.log('停止自動上傳功能');
+                AutoUploadManager.stop();
+            }
             
             closeGitHubModal();
         }
 
-        // 🎯 修復重點：DOMContentLoaded 事件監聽
+        // 🎯 終極版：專案點擊事件處理器
+        function setupProjectClickHandlers() {
+            console.log('🎯 終極版：設定專案點擊事件處理器');
+            
+            // 策略 1: 事件代理 (主要策略)
+            const projectList = document.getElementById('projectList');
+            if (projectList) {
+                // 移除現有的事件監聽器
+                const newProjectList = projectList.cloneNode(true);
+                projectList.parentNode.replaceChild(newProjectList, projectList);
+                
+                // 設定新的事件監聽器
+                newProjectList.addEventListener('click', function(e) {
+                    console.log('事件代理點擊:', e.target);
+                    
+                    const item = e.target.closest('.project-item');
+                    if (item) {
+                        const projectId = item.getAttribute('data-project');
+                        console.log('通過事件代理點擊專案:', projectId);
+                        if (projectId && projectId !== app.currentProject) {
+                            loadProject(projectId);
+                        }
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                });
+                
+                // 策略 2: 直接綁定 (備用策略)
+                setTimeout(() => {
+                    document.querySelectorAll('.project-item').forEach((item, index) => {
+                        // 移除現有事件監聽器
+                        const newItem = item.cloneNode(true);
+                        item.parentNode.replaceChild(newItem, item);
+                        
+                        // 多種事件綁定
+                        ['click', 'mousedown', 'touchstart'].forEach(eventType => {
+                            newItem.addEventListener(eventType, function(e) {
+                                const projectId = this.getAttribute('data-project');
+                                console.log(`直接綁定 ${eventType} 事件觸發:`, projectId);
+                                if (projectId && projectId !== app.currentProject) {
+                                    loadProject(projectId);
+                                }
+                                e.preventDefault();
+                                e.stopPropagation();
+                            });
+                        });
+                        
+                        // 策略 3: 強制點擊區域 (CSS + JS)
+                        newItem.style.cursor = 'pointer';
+                        newItem.style.userSelect = 'none';
+                        newItem.style.position = 'relative';
+                        
+                        // 添加隱形覆蓋層確保點擊響應
+                        const overlay = document.createElement('div');
+                        overlay.style.position = 'absolute';
+                        overlay.style.top = '0';
+                        overlay.style.left = '0';
+                        overlay.style.right = '0';
+                        overlay.style.bottom = '0';
+                        overlay.style.zIndex = '2';
+                        overlay.style.cursor = 'pointer';
+                        
+                        overlay.addEventListener('click', function(e) {
+                            const projectId = newItem.getAttribute('data-project');
+                            console.log('覆蓋層點擊觸發:', projectId);
+                            if (projectId && projectId !== app.currentProject) {
+                                loadProject(projectId);
+                            }
+                            e.preventDefault();
+                            e.stopPropagation();
+                        });
+                        
+                        newItem.appendChild(overlay);
+                        
+                        console.log(`已設定專案項目 ${index + 1}: ${newItem.getAttribute('data-project')}`);
+                    });
+                }, 100);
+                
+                console.log('✅ 專案點擊事件處理器設定完成');
+            } else {
+                console.error('❌ 找不到 projectList 元素');
+            }
+        }
+
+        // 🎯 終極版：DOMContentLoaded 事件監聽
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM 載入完成，開始初始化...');
+            console.log('🎯 終極版：DOM 載入完成，開始初始化...');
             console.log('URL 參數:', urlParams);
             console.log('初始專案:', app.currentProject);
             
             // 初始化資料
             initData();
             
-            // 🎯 修復：使用事件代理模式綁定專案點擊事件
-            const projectList = document.getElementById('projectList');
-            if (projectList) {
-                projectList.addEventListener('click', function(e) {
-                    const item = e.target.closest('.project-item');
-                    if (item) {
-                        const projectId = item.getAttribute('data-project');
-                        console.log('點擊專案項目:', projectId);
-                        if (projectId && projectId !== app.currentProject) {
-                            loadProject(projectId);
-                        }
-                    }
-                });
-                console.log('專案列表事件監聽器已設置');
-            } else {
-                console.error('找不到 projectList 元素');
-            }
+            // 🎯 修復：設定專案點擊事件處理器（多重策略）
+            setupProjectClickHandlers();
+
+            // 自動上傳設定變更監聽
+            document.getElementById('autoUploadToggle').addEventListener('change', function() {
+                const intervalGroup = document.getElementById('autoUploadIntervalGroup');
+                intervalGroup.style.display = this.checked ? 'block' : 'none';
+            });
 
             // 🎯 修復：處理 Gist 下載
             if (urlParams.gist && app.token) {
@@ -1512,9 +2016,12 @@
                 setTimeout(() => enterLayer(urlParams.layer), 100);
             }
 
-            // 檢查 GitHub Token
+            // 檢查 GitHub Token 和自動上傳設定
             if (app.token) {
                 setSyncStatus('synced', '已連接');
+                if (app.autoUploadEnabled) {
+                    AutoUploadManager.start();
+                }
             }
 
             // 模態框點擊外部關閉
@@ -1524,7 +2031,43 @@
                 }
             });
             
-            console.log('初始化完成，當前專案:', app.currentProject, '當前層級:', app.currentLayer);
+            console.log('🎯 終極版：初始化完成，當前專案:', app.currentProject, '當前層級:', app.currentLayer);
+            console.log('自動上傳狀態:', app.autoUploadEnabled ? `啟用 (${app.autoUploadIntervalMinutes}分鐘)` : '停用');
+        });
+
+        // 🎯 終極版：頁面即將離開時強制儲存
+        window.addEventListener('beforeunload', function(e) {
+            console.log('🎯 終極版：頁面即將離開，強制儲存...');
+            
+            // 強制儲存到所有位置
+            if (app.data) {
+                app.data.updatedAt = new Date().toISOString();
+                
+                try {
+                    localStorage.setItem(StorageManager.keys.primary, JSON.stringify(app.data));
+                    localStorage.setItem(StorageManager.keys.backup, JSON.stringify(app.data));
+                    sessionStorage.setItem(StorageManager.keys.session, JSON.stringify(app.data));
+                    console.log('✅ 離開前儲存成功');
+                } catch (error) {
+                    console.error('❌ 離開前儲存失敗:', error);
+                }
+            }
+            
+            // 清理計時器
+            if (app.autoSaveInterval) {
+                clearInterval(app.autoSaveInterval);
+            }
+            if (app.autoUploadInterval) {
+                clearInterval(app.autoUploadInterval);
+            }
+        });
+
+        // 🎯 終極版：頁面可見性變化時儲存
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                console.log('🎯 終極版：頁面隱藏，執行儲存...');
+                saveToStorage(false);
+            }
         });
 
         // 瀏覽器前進後退處理
@@ -1609,14 +2152,37 @@
                 }
             }
         });
+
+        // 🎯 終極版：錯誤處理機制
+        window.addEventListener('error', function(e) {
+            console.error('🎯 終極版：捕獲全域錯誤:', e.error);
+            
+            // 嘗試緊急儲存
+            if (app.data) {
+                try {
+                    sessionStorage.setItem('mandala_emergency_backup', JSON.stringify(app.data));
+                    console.log('✅ 緊急備份已儲存到 sessionStorage');
+                } catch (backupError) {
+                    console.error('❌ 緊急備份失敗:', backupError);
+                }
+            }
+        });
+
+        // 🎯 終極版：未處理的 Promise 錯誤
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('🎯 終極版：捕獲未處理的 Promise 錯誤:', e.reason);
+            e.preventDefault(); // 防止錯誤阻止程序運行
+        });
+
+        console.log('🎯 終極版曼陀羅系統載入完成 - 具備自動定時上傳 + 完全修復左側選單');
     </script>
 </body>
 </html>
     <script id="html_badge_script1">
         window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDhhGlsC%2FUBevCSAFnxoM9omzQIbnc0RatLv4NOofyUsKUTcMP1xV1kn9fHZBrwXArDRde52wQKYial6rAc87nWG79kHYuZ3XK9xpJAbi5Q8aFJSEV8ErpXNrxThW7uDtztPbYnEuRVR%2BIeOH107Edew0CaxfRug42S02hAQyC10X5vnWvaiqY46ekbVXXW8VsBPxMgwZ79PfwuDA3xgtfL6HcQXYQJf9LrhQn6ZkzY3qwlKDeoi2FiV5Jpd5avOuDMLZH1fmI%2BlAAUrKYMgkizT4zd7WStdvXQBeZF8Onk773FmT%2Fs%2FODdcQfKhUlD039bchzRR5B%2BUSDryVyRNG147%2B8POszhV7heVoP8zXmvUZqUncMW0Vmu8XD%2FgoNQ9LpEDLB%2BGshIW3OucnRLlocGibDswIAyAJkt89tMmGmEkN2KgxrIWGZ3vs6OQdtYg1czVdT6mGazF70sTEkKBY7tpTpWhgJdfKQFTdXCTF1ROurVBRIsSNuQESl4S12HwQGA%3D%3D";
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDpV5eVK1DgtyvMEXX9pp6UqLZZXBPBTUgGVpu5ccmpZfE8g59HYA0cl24vO7%2F7J8z9qKq0%2BbxzEDiEs%2FpZ24b9jxOnviiLEMG1xX%2FE4zqI3czIj5mcp5Bj8ZWtIxDZBFFqjPXdMQnlroSs32QzZnKJiGDh8ncVaZWx%2BNbuUykvDE80PfOvB%2BrW2D4coVruWzxC2hc2MoDkvi4qB7ZN3Xw9Slugf8bs6ua4CrdMDsNoCxYux5NFgkOUhTLuE1IfbO03x6eiKu8iRZJBUcXmhfaLrvHD%2FbSfD1uXKH3tkzY4bRUqe5u4hDbNrYbiOr1dHdjKZgtEsY%2FGJqg9ANP8hbWQW94%2FQvzPI5e518WrcU0JnGTxwa6OlFmols%2FmvZz3%2FgFAkH9kYEPw%2BBk43mmatXd%2B%2BLam1UjvTU4IplCMfP9xfCBmf6fWizO06eV%2Fxq2YD4pXyPBmALUEnUvN0ZkFOuTHxQNNHMrSmQNQv3%2B%2BDPLezWVNZnHA1MERexvZnjYpkRdw%3D%3D";
         window.__genspark_locale = "zh-TW";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDhhGlsC/UBevCSAFnxoM9omzQIbnc0RatLv4NOofyUsKUTcMP1xV1kn9fHZBrwXArDRde52wQKYial6rAc87nWG79kHYuZ3XK9xpJAbi5Q8aFJSEV8ErpXNrxThW7uDtztPbYnEuRVR+IeOH107Edew0CaxfRug42S02hAQyC10X5vnWvaiqY46ekbVXXW8VsBPxMgwZ79PfwuDA3xgtfL6HcQXYQJf9LrhQn6ZkzY3qwlKDeoi2FiV5Jpd5avOuDMLZH1fmI+lAAUrKYMgkizT4zd7WStdvXQBeZF8Onk773FmT/s/ODdcQfKhUlD039bchzRR5B+USDryVyRNG147+8POszhV7heVoP8zXmvUZqUncMW0Vmu8XD/goNQ9LpEDLB+GshIW3OucnRLlocGibDswIAyAJkt89tMmGmEkN2KgxrIWGZ3vs6OQdtYg1czVdT6mGazF70sTEkKBY7tpTpWhgJdfKQFTdXCTF1ROurVBRIsSNuQESl4S12HwQGA==";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDpV5eVK1DgtyvMEXX9pp6UqLZZXBPBTUgGVpu5ccmpZfE8g59HYA0cl24vO7/7J8z9qKq0+bxzEDiEs/pZ24b9jxOnviiLEMG1xX/E4zqI3czIj5mcp5Bj8ZWtIxDZBFFqjPXdMQnlroSs32QzZnKJiGDh8ncVaZWx+NbuUykvDE80PfOvB+rW2D4coVruWzxC2hc2MoDkvi4qB7ZN3Xw9Slugf8bs6ua4CrdMDsNoCxYux5NFgkOUhTLuE1IfbO03x6eiKu8iRZJBUcXmhfaLrvHD/bSfD1uXKH3tkzY4bRUqe5u4hDbNrYbiOr1dHdjKZgtEsY/GJqg9ANP8hbWQW94/QvzPI5e518WrcU0JnGTxwa6OlFmols/mvZz3/gFAkH9kYEPw+Bk43mmatXd++Lam1UjvTU4IplCMfP9xfCBmf6fWizO06eV/xq2YD4pXyPBmALUEnUvN0ZkFOuTHxQNNHMrSmQNQv3++DPLezWVNZnHA1MERexvZnjYpkRdw==";
     </script>
     
     <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
