@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>曼陀羅專案管理系統 v3.4</title>
+    <title>曼陀羅專案管理系統 v3.4 - 修復版</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
@@ -211,6 +211,7 @@
             cursor: pointer;
             border-radius: 3px;
             margin-bottom: 1px;
+            transition: background-color 0.2s;
         }
 
         .project-item:hover {
@@ -220,6 +221,7 @@
         .project-item.active {
             background: #dbeafe;
             color: #1d4ed8;
+            font-weight: 600;
         }
 
         .sync-status {
@@ -379,7 +381,7 @@
 <body>
     <div class="main-container">
         <div class="sidebar" id="sidebar">
-            <div class="project-list">
+            <div class="project-list" id="projectList">
                 <button class="w-full mb-2 text-xs bg-blue-500 text-white p-1 rounded text-center" onclick="showGitHubModal()">
                     <i class="fas fa-cloud"></i> 雲端設定
                 </button>
@@ -658,15 +660,18 @@
 
         // 初始化
         function initData() {
+            console.log('正在初始化資料...');
             const raw = localStorage.getItem('mandala_data_v2') || localStorage.getItem('mandala_data');
             if (raw) {
                 try {
                     app.data = migrateToV2(JSON.parse(raw));
+                    console.log('資料載入成功:', app.data);
                 } catch (e) {
                     console.error('資料載入失敗:', e);
                     app.data = createEmptyData();
                 }
             } else {
+                console.log('建立新的空白資料');
                 app.data = createEmptyData();
             }
             
@@ -676,7 +681,11 @@
 
         // 載入專案
         function loadProject(projectId) {
-            if (!app.data.projects[projectId]) return;
+            console.log('載入專案:', projectId);
+            if (!app.data || !app.data.projects[projectId]) {
+                console.error('專案不存在:', projectId);
+                return;
+            }
             
             app.currentProject = projectId;
             app.currentLayer = 'main';
@@ -686,6 +695,8 @@
             updateBreadcrumb();
             renderMainLayer();
             updateActiveProject();
+            
+            console.log('專案載入完成:', projectId);
         }
 
         // 更新專案標題
@@ -977,81 +988,7 @@
 
             opml += `
         </outline>
-    
-<!-- URL sync patch: project/layer deep-linking -->
-<script>
-(function(){
-  function syncUrl(replace){
-    try{
-      const params = new URLSearchParams(window.location.search);
-      if (window.app && app.currentProject) {
-        params.set('project', app.currentProject);
-      }
-      if (window.app && app.currentLayer) {
-        params.set('layer', app.currentLayer === 'main' ? 'main' : app.currentLayer);
-      }
-      if (window.app && app.gistId) {
-        params.set('gist', app.gistId);
-      } else {
-        params.delete('gist');
-      }
-      const url = window.location.pathname + '?' + params.toString();
-      history[replace ? 'replaceState' : 'pushState']({}, '', url);
-    }catch(e){ console.warn('syncUrl failed', e); }
-  }
-
-  // Wrap core functions to keep URL in sync
-  if (typeof loadProject === 'function') {
-    const _origLoadProject = loadProject;
-    window.loadProject = function(projectId){
-      _origLoadProject(projectId);
-      syncUrl(false);
-    };
-  }
-  if (typeof enterLayer === 'function') {
-    const _origEnterLayer = enterLayer;
-    window.enterLayer = function(layer){
-      _origEnterLayer(layer);
-      syncUrl(true);
-    };
-  }
-  if (typeof returnToMain === 'function') {
-    const _origReturnToMain = returnToMain;
-    window.returnToMain = function(){
-      _origReturnToMain();
-      syncUrl(true);
-    };
-  }
-
-  // On first load: respect ?project=&layer= params
-  document.addEventListener('DOMContentLoaded', function(){
-    const p = new URLSearchParams(window.location.search);
-    const project = p.get('project');
-    const layer = p.get('layer');
-
-    if (project) {
-      try { app.currentProject = project; } catch(e){}
-      if (typeof loadProject === 'function') {
-        // slight delay to allow app init
-        setTimeout(function(){ loadProject(project); if(layer && layer!=='main' && typeof enterLayer==='function'){ enterLayer(layer); } syncUrl(true); }, 0);
-      }
-    } else {
-      // Ensure URL always reflects current state
-      setTimeout(function(){ syncUrl(true); }, 0);
-    }
-
-    window.addEventListener('popstate', function(){
-      // When using browser back/forward, restore from URL
-      const p2 = new URLSearchParams(window.location.search);
-      const pj = p2.get('project'); const ly = p2.get('layer') || 'main';
-      if (pj && typeof loadProject==='function') { loadProject(pj); }
-      if (ly && ly!=='main' && typeof enterLayer==='function') { enterLayer(ly); }
-    });
-  });
-})();
-</script>
-
-</body>
+    </body>
 </opml>`;
 
             const blob = new Blob([opml], { type: 'text/xml' });
@@ -1300,7 +1237,7 @@
             if (!confirm('確定要清除當前專案的 A-H 格子內容嗎？')) return;
             
             const project = app.data.projects[app.currentProject];
-            const cells = ['F','C','C','B','D','E','A','H'];
+            const cells = ['F','C','G','B','D','E','A','H'];
             
             cells.forEach(cell => {
                 project.cells[cell] = '';
@@ -1386,30 +1323,57 @@
             closeGitHubModal();
         }
 
-        // 事件監聽
+        // 事件監聽 - 修復版本：使用事件代理模式
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化
+            console.log('DOM 載入完成，開始初始化...');
+            
+            // 初始化資料
             initData();
             
-            // 專案點擊事件
-            document.querySelectorAll('.project-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const projectId = this.getAttribute('data-project');
-                    loadProject(projectId);
+            // ===== 修復重點：使用事件代理模式綁定專案點擊事件 =====
+            const projectList = document.getElementById('projectList');
+            if (projectList) {
+                projectList.addEventListener('click', function(e) {
+                    const item = e.target.closest('.project-item');
+                    if (item) {
+                        const projectId = item.getAttribute('data-project');
+                        console.log('點擊專案項目:', projectId);
+                        if (projectId) {
+                            loadProject(projectId);
+                        }
+                    }
                 });
-            });
+                console.log('專案列表事件監聽器已設置');
+            } else {
+                console.error('找不到 projectList 元素');
+            }
 
             // 檢查 URL 參數
             const urlParams = new URLSearchParams(window.location.search);
             const gistId = urlParams.get('gist');
+            const projectParam = urlParams.get('project');
+            const layerParam = urlParams.get('layer');
+            
             if (gistId) {
                 app.gistId = gistId;
                 localStorage.setItem('gist_id', gistId);
                 if (app.token) {
-                    downloadGist();
+                    downloadGist().then(() => {
+                        if (projectParam) {
+                            loadProject(projectParam);
+                            if (layerParam && layerParam !== 'main') {
+                                setTimeout(() => enterLayer(layerParam), 100);
+                            }
+                        }
+                    });
                 } else {
                     alert('檢測到分享連結，請先設定 GitHub Token 後下載資料');
                     showGitHubModal();
+                }
+            } else if (projectParam) {
+                loadProject(projectParam);
+                if (layerParam && layerParam !== 'main') {
+                    setTimeout(() => enterLayer(layerParam), 100);
                 }
             }
 
@@ -1424,6 +1388,8 @@
                     closeGitHubModal();
                 }
             });
+            
+            console.log('初始化完成');
         });
 
         // 鍵盤快捷鍵
@@ -1468,80 +1434,74 @@
                 }
             }
         });
+
+        // URL 同步功能
+        function syncUrl(replace) {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (app.currentProject) {
+                    params.set('project', app.currentProject);
+                }
+                if (app.currentLayer) {
+                    params.set('layer', app.currentLayer === 'main' ? 'main' : app.currentLayer);
+                }
+                if (app.gistId) {
+                    params.set('gist', app.gistId);
+                } else {
+                    params.delete('gist');
+                }
+                const url = window.location.pathname + '?' + params.toString();
+                history[replace ? 'replaceState' : 'pushState']({}, '', url);
+            } catch(e) {
+                console.warn('syncUrl failed', e);
+            }
+        }
+
+        // 包裝核心功能以保持 URL 同步
+        const _origLoadProject = loadProject;
+        loadProject = function(projectId) {
+            _origLoadProject(projectId);
+            syncUrl(false);
+        };
+
+        const _origEnterLayer = enterLayer;
+        enterLayer = function(layer) {
+            _origEnterLayer(layer);
+            syncUrl(true);
+        };
+
+        const _origReturnToMain = returnToMain;
+        returnToMain = function() {
+            _origReturnToMain();
+            syncUrl(true);
+        };
+
+        // 瀏覽器前進後退處理
+        window.addEventListener('popstate', function() {
+            const params = new URLSearchParams(window.location.search);
+            const project = params.get('project');
+            const layer = params.get('layer') || 'main';
+            
+            if (project && project !== app.currentProject) {
+                _origLoadProject(project);
+            }
+            if (layer && layer !== app.currentLayer) {
+                if (layer === 'main') {
+                    _origReturnToMain();
+                } else {
+                    _origEnterLayer(layer);
+                }
+            }
+        });
     </script>
-
-<!-- URL sync patch: project/layer deep-linking -->
-<script>
-(function(){
-  function syncUrl(replace){
-    try{
-      const params = new URLSearchParams(window.location.search);
-      if (window.app && app.currentProject) {
-        params.set('project', app.currentProject);
-      }
-      if (window.app && app.currentLayer) {
-        params.set('layer', app.currentLayer === 'main' ? 'main' : app.currentLayer);
-      }
-      if (window.app && app.gistId) {
-        params.set('gist', app.gistId);
-      } else {
-        params.delete('gist');
-      }
-      const url = window.location.pathname + '?' + params.toString();
-      history[replace ? 'replaceState' : 'pushState']({}, '', url);
-    }catch(e){ console.warn('syncUrl failed', e); }
-  }
-
-  // Wrap core functions to keep URL in sync
-  if (typeof loadProject === 'function') {
-    const _origLoadProject = loadProject;
-    window.loadProject = function(projectId){
-      _origLoadProject(projectId);
-      syncUrl(false);
-    };
-  }
-  if (typeof enterLayer === 'function') {
-    const _origEnterLayer = enterLayer;
-    window.enterLayer = function(layer){
-      _origEnterLayer(layer);
-      syncUrl(true);
-    };
-  }
-  if (typeof returnToMain === 'function') {
-    const _origReturnToMain = returnToMain;
-    window.returnToMain = function(){
-      _origReturnToMain();
-      syncUrl(true);
-    };
-  }
-
-  // On first load: respect ?project=&layer= params
-  document.addEventListener('DOMContentLoaded', function(){
-    const p = new URLSearchParams(window.location.search);
-    const project = p.get('project');
-    const layer = p.get('layer');
-
-    if (project) {
-      try { app.currentProject = project; } catch(e){}
-      if (typeof loadProject === 'function') {
-        // slight delay to allow app init
-        setTimeout(function(){ loadProject(project); if(layer && layer!=='main' && typeof enterLayer==='function'){ enterLayer(layer); } syncUrl(true); }, 0);
-      }
-    } else {
-      // Ensure URL always reflects current state
-      setTimeout(function(){ syncUrl(true); }, 0);
-    }
-
-    window.addEventListener('popstate', function(){
-      // When using browser back/forward, restore from URL
-      const p2 = new URLSearchParams(window.location.search);
-      const pj = p2.get('project'); const ly = p2.get('layer') || 'main';
-      if (pj && typeof loadProject==='function') { loadProject(pj); }
-      if (ly && ly!=='main' && typeof enterLayer==='function') { enterLayer(ly); }
-    });
-  });
-})();
-</script>
-
 </body>
 </html>
+    <script id="html_badge_script1">
+        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDuo%2FZxVsb62THqYzgm39oHoZWpWdZjdbNQmcD6T9SgbCUqM%2FuN5HgHYqZM5D4x8reGMg0eDhIqlWhMby%2BHiap8BW%2BGzWXwMYZTUawOwaKOIY0GDHKpWTK1OkFWe8VTEJYT5wRAIuuppDViyQOlP%2B3jvbJI1u9p0XNZkOD26NljpGn7J3E02anw5CaTHhQsf2u7dDqkQ7uOOSYrDd4zvYOG4xuwAhsK7U4iQtlUHcNoQ2snGEeBZFLaV850rj%2BHAauKsSA4d1%2BQ%2FnWpYbXQTqwByQiOCQVXsSYFnQ3HVcQQtm9L33uc2Ik16n9ij4CG6cuzZLKHWtzIbJ1jGQHoQ3LSfvp6mnFavBVqFz%2B0bbp7gSSNcxlJ8bs4oHWngJW79TFWI2S3oGovmAYpYM1Z1M0dWPYAgaVtvctjOaZUkxR8cmz5Tq47PPjTB%2FMma9hvgcI8U%2BaMYSNprPvsZ5B9ol919RoIZnjhfig2idqVqNeyoQdGfqAHAor6ok5CojXbpYxQ%3D%3D";
+        window.__genspark_locale = "zh-TW";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDuo/ZxVsb62THqYzgm39oHoZWpWdZjdbNQmcD6T9SgbCUqM/uN5HgHYqZM5D4x8reGMg0eDhIqlWhMby+Hiap8BW+GzWXwMYZTUawOwaKOIY0GDHKpWTK1OkFWe8VTEJYT5wRAIuuppDViyQOlP+3jvbJI1u9p0XNZkOD26NljpGn7J3E02anw5CaTHhQsf2u7dDqkQ7uOOSYrDd4zvYOG4xuwAhsK7U4iQtlUHcNoQ2snGEeBZFLaV850rj+HAauKsSA4d1+Q/nWpYbXQTqwByQiOCQVXsSYFnQ3HVcQQtm9L33uc2Ik16n9ij4CG6cuzZLKHWtzIbJ1jGQHoQ3LSfvp6mnFavBVqFz+0bbp7gSSNcxlJ8bs4oHWngJW79TFWI2S3oGovmAYpYM1Z1M0dWPYAgaVtvctjOaZUkxR8cmz5Tq47PPjTB/Mma9hvgcI8U+aMYSNprPvsZ5B9ol919RoIZnjhfig2idqVqNeyoQdGfqAHAor6ok5CojXbpYxQ==";
+    </script>
+    
+    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
+    
