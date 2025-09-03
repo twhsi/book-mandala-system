@@ -3,33 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>曼陀羅專案管理系統 v3.7 - 無快捷鍵版</title>
+    <title>曼陀羅專案管理系統 v4.1 - Sidebar 修復版</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
         :root {
-            --cell-font-size: 16px; /* 預設放大字體，約可容納10個字 */
+            --cell-font-size: 16px;
             --cell-line-height: 1.3;
+            --micro-font-size: 10px;
+            --micro-line-height: 1.2;
         }
         
         .font-size-small {
             --cell-font-size: 12px;
             --cell-line-height: 1.2;
+            --micro-font-size: 8px;
+            --micro-line-height: 1.1;
         }
         
         .font-size-medium {
             --cell-font-size: 16px;
             --cell-line-height: 1.3;
+            --micro-font-size: 10px;
+            --micro-line-height: 1.2;
         }
         
         .font-size-large {
             --cell-font-size: 20px;
             --cell-line-height: 1.4;
+            --micro-font-size: 12px;
+            --micro-line-height: 1.3;
         }
         
         .font-size-xlarge {
             --cell-font-size: 24px;
             --cell-line-height: 1.5;
+            --micro-font-size: 14px;
+            --micro-line-height: 1.4;
         }
         
         * { box-sizing: border-box; }
@@ -118,6 +128,20 @@
             border-color: #10b981;
         }
 
+        .toolbar button.view-active {
+            background: #8b5cf6;
+            color: white;
+            border-color: #8b5cf6;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 2px;
+            margin-right: 6px;
+            padding-right: 6px;
+            border-right: 1px solid #d1d5db;
+        }
+
         .font-size-controls {
             display: flex;
             gap: 2px;
@@ -164,6 +188,7 @@
             padding: 4px;
         }
 
+        /* 3×3 視圖樣式 */
         .mandala-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -178,6 +203,14 @@
             padding: 2px;
         }
 
+        /* 9×9 視圖樣式 */
+        .mandala-grid.view-9x9 {
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            background: #374151;
+            padding: 1px;
+        }
+
         .grid-cell {
             background: #f3f4f6;
             border-radius: 4px;
@@ -190,7 +223,7 @@
             position: relative;
         }
 
-        .grid-cell:hover:not(.center) {
+        .grid-cell:hover:not(.center):not(.micro-center) {
             background: #e5e7eb;
         }
 
@@ -204,11 +237,53 @@
             border: 2px solid #f59e0b;
         }
 
+        /* 9×9 視圖專用樣式 */
+        .micro-cell {
+            background: #f3f4f6;
+            border-radius: 2px;
+            display: flex;
+            flex-direction: column;
+            padding: 2px;
+            min-height: 40px;
+            position: relative;
+            border: none;
+        }
+
+        .micro-cell.micro-center {
+            background: #dbeafe;
+        }
+
+        .micro-cell.micro-main {
+            background: #fef3c7;
+        }
+
+        .micro-cell.micro-sub {
+            background: #f3f4f6;
+        }
+
+        /* 區塊分隔線 - 每3格加粗線 */
+        .micro-cell.border-thick-right {
+            border-right: 2px solid #374151;
+        }
+
+        .micro-cell.border-thick-bottom {
+            border-bottom: 2px solid #374151;
+        }
+
         .cell-label {
             font-size: 9px;
             font-weight: bold;
             color: #374151;
             margin-bottom: 2px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .micro-label {
+            font-size: 7px;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 1px;
             text-align: center;
             flex-shrink: 0;
         }
@@ -220,6 +295,19 @@
             background: transparent;
             font-size: var(--cell-font-size);
             line-height: var(--cell-line-height);
+            resize: none;
+            width: 100%;
+            min-height: 0;
+            transition: font-size 0.2s ease;
+        }
+
+        .micro-content {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: var(--micro-font-size);
+            line-height: var(--micro-line-height);
             resize: none;
             width: 100%;
             min-height: 0;
@@ -265,7 +353,7 @@
             font-weight: 600;
         }
 
-        /* ✅ 修正：讓 pseudo-element 不攔截點擊 */
+        /* 修復：避免吃掉點擊事件 */
         .project-item::before {
             content: '';
             position: absolute;
@@ -274,7 +362,7 @@
             right: 0;
             bottom: 0;
             z-index: 1;
-            pointer-events: none; /* 修正重點 */
+            pointer-events: none;
         }
 
         .sync-status {
@@ -380,7 +468,6 @@
             background: white;
         }
 
-        /* 子層格子樣式 */
         .grid-cell.sub-layer {
             background: #fef3c7;
         }
@@ -394,7 +481,6 @@
             background: #86efac;
         }
 
-        /* TheBrain 優化指示器 */
         .thebrain-indicator {
             position: fixed;
             top: 10px;
@@ -418,6 +504,15 @@
         }
 
         /* 響應式設計 */
+        @media (max-width: 1200px) {
+            .micro-cell {
+                min-height: 35px;
+            }
+            .micro-content {
+                font-size: calc(var(--micro-font-size) * 0.9);
+            }
+        }
+
         @media (max-width: 800px) {
             .sidebar {
                 width: 120px;
@@ -427,6 +522,13 @@
             }
             .font-size-controls {
                 display: none;
+            }
+            .micro-cell {
+                min-height: 30px;
+                padding: 1px;
+            }
+            .micro-content {
+                font-size: calc(var(--micro-font-size) * 0.8);
             }
         }
 
@@ -447,9 +549,12 @@
                 height: 20px;
                 padding: 0 4px;
             }
+            .view-controls {
+                margin-right: 3px;
+                padding-right: 3px;
+            }
         }
 
-        /* 確保完整顯示 */
         @media (max-height: 600px) {
             .toolbar {
                 height: 28px;
@@ -465,11 +570,13 @@
             .main-content {
                 padding: 4px;
             }
+            .micro-cell {
+                min-height: 25px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- TheBrain 優化指示器 -->
     <div class="thebrain-indicator" id="thebrainIndicator">
         <i class="fas fa-save"></i> 自動儲存中...
     </div>
@@ -532,6 +639,15 @@
                 <button class="toggle-sidebar" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
+
+                <div class="view-controls">
+                    <button id="view3x3" onclick="setView('3x3')" class="view-active" title="3×3 視圖">
+                        <i class="fas fa-th"></i> 3×3
+                    </button>
+                    <button id="view9x9" onclick="setView('9x9')" title="9×9 總覽">
+                        <i class="fas fa-border-all"></i> 9×9
+                    </button>
+                </div>
                 
                 <button class="primary" onclick="saveLocal()">
                     <i class="fas fa-save"></i> 儲存
@@ -577,7 +693,6 @@
                     <i class="fas fa-trash"></i> 清除全部
                 </button>
 
-                <!-- 字體大小控制 -->
                 <div class="font-size-controls">
                     <button id="fontSmall" onclick="setFontSize('small')" title="小字體">
                         <i class="fas fa-font"></i> 小
@@ -607,43 +722,7 @@
 
                 <div class="mandala-container">
                     <div class="mandala-grid" id="mandalaGrid">
-                        <!-- 主層：F-C-G / B-中心-D / E-A-H -->
-                        <div class="grid-cell" data-position="F" onclick="enterLayer('F')">
-                            <div class="cell-label">F</div>
-                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="F"></textarea>
-                        </div>
-                        <div class="grid-cell" data-position="C" onclick="enterLayer('C')">
-                            <div class="cell-label">C</div>
-                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="C"></textarea>
-                        </div>
-                        <div class="grid-cell" data-position="G" onclick="enterLayer('G')">
-                            <div class="cell-label">G</div>
-                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="G"></textarea>
-                        </div>
-                        <div class="grid-cell" data-position="B" onclick="enterLayer('B')">
-                            <div class="cell-label">B</div>
-                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="B"></textarea>
-                        </div>
-                        <div class="grid-cell center" data-position="CENTER">
-                            <div class="cell-label">中心</div>
-                            <textarea class="cell-content" placeholder="專案核心主題..." data-cell="CENTER"></textarea>
-                        </div>
-                        <div class="grid-cell" data-position="D" onclick="enterLayer('D')">
-                            <div class="cell-label">D</div>
-                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="D"></textarea>
-                        </div>
-                        <div class="grid-cell" data-position="E" onclick="enterLayer('E')">
-                            <div class="cell-label">E</div>
-                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="E"></textarea>
-                        </div>
-                        <div class="grid-cell" data-position="A" onclick="enterLayer('A')">
-                            <div class="cell-label">A</div>
-                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="A"></textarea>
-                        </div>
-                        <div class="grid-cell" data-position="H" onclick="enterLayer('H')">
-                            <div class="cell-label">H</div>
-                            <textarea class="cell-content" placeholder="點擊展開思維..." data-cell="H"></textarea>
-                        </div>
+                        <!-- 動態生成內容 -->
                     </div>
                 </div>
             </div>
@@ -697,26 +776,33 @@
         </div>
     </div>
 
-    <!-- 檔案輸入 -->
     <input type="file" id="importJSONInput" accept=".json" style="display: none;" onchange="handleJSONImport(this)">
     <input type="file" id="importOPMLInput" accept=".opml,.xml" style="display: none;" onchange="handleOPMLImport(this)">
 
     <script>
-        // 🎯 無快捷鍵版本：移除所有鍵盤快捷鍵功能
-        
+        // 9×9 視圖常數
+        const BLOCK_MAP = [
+            ['F','C','G'],
+            ['B','CENTER','D'], 
+            ['E','A','H']
+        ];
+
+        const SUBCELL_LAYOUT = [
+            ['6','3','7'],
+            ['2','','4'],
+            ['5','1','8']
+        ];
+
         // 全域儲存管理器
         const StorageManager = {
-            // 多重儲存鍵值
             keys: {
                 primary: 'mandala_data_v2',
                 backup: 'mandala_backup_v2',
                 session: 'mandala_session_v2'
             },
             
-            // 儲存重試次數
             maxRetries: 3,
             
-            // 儲存到多個位置
             save: function(data, showIndicator = true) {
                 const jsonData = JSON.stringify(data);
                 let savedCount = 0;
@@ -725,7 +811,6 @@
                     this.showSaveIndicator();
                 }
                 
-                // 主要儲存 (localStorage)
                 try {
                     localStorage.setItem(this.keys.primary, jsonData);
                     savedCount++;
@@ -733,7 +818,6 @@
                     console.warn('主要儲存失敗:', e);
                 }
                 
-                // 備份儲存 (localStorage)
                 try {
                     localStorage.setItem(this.keys.backup, jsonData);
                     savedCount++;
@@ -741,7 +825,6 @@
                     console.warn('備份儲存失敗:', e);
                 }
                 
-                // 會話儲存 (sessionStorage)
                 try {
                     sessionStorage.setItem(this.keys.session, jsonData);
                     savedCount++;
@@ -749,11 +832,10 @@
                     console.warn('會話儲存失敗:', e);
                 }
                 
-                console.log(`無快捷鍵版儲存: ${savedCount}/3 儲存位置成功`);
+                console.log(`Sidebar修復版儲存: ${savedCount}/3 儲存位置成功`);
                 return savedCount > 0;
             },
             
-            // 從多個位置載入
             load: function() {
                 const sources = [
                     () => localStorage.getItem(this.keys.primary),
@@ -778,7 +860,6 @@
                 return null;
             },
             
-            // 顯示儲存指示器
             showSaveIndicator: function() {
                 const indicator = document.getElementById('thebrainIndicator');
                 indicator.classList.remove('auto-upload');
@@ -789,7 +870,6 @@
                 }, 2000);
             },
 
-            // 顯示上傳指示器
             showUploadIndicator: function() {
                 const indicator = document.getElementById('thebrainIndicator');
                 indicator.classList.add('auto-upload');
@@ -801,26 +881,26 @@
             }
         };
 
-        // 先解析 URL 參數再初始化
         function parseUrlParams() {
             const params = new URLSearchParams(window.location.search);
             return {
                 project: params.get('project'),
                 layer: params.get('layer'),
+                view: params.get('view'),
                 gist: params.get('gist')
             };
         }
 
-        // 從 URL 參數或預設值獲取初始專案
         const urlParams = parseUrlParams();
         const initialProject = urlParams.project || '2.6.1';
         const initialLayer = urlParams.layer || 'main';
+        const initialView = urlParams.view || '3x3';
 
-        // 全域變數 - 使用 URL 參數作為初始值
         let app = {
             data: null,
             currentProject: initialProject,
             currentLayer: initialLayer,
+            currentView: initialView,
             gistId: urlParams.gist || localStorage.getItem('gist_id') || null,
             token: localStorage.getItem('github_token') || '',
             fontSize: localStorage.getItem('font_size') || 'medium',
@@ -833,9 +913,8 @@
             lastDataHash: null
         };
 
-        console.log('🎯 無快捷鍵版初始化 - 專案:', app.currentProject, '層級:', app.currentLayer);
+        console.log('🎯 Sidebar修復版初始化 - 專案:', app.currentProject, '層級:', app.currentLayer, '視圖:', app.currentView);
 
-        // 計算資料雜湊值，用於檢測變更
         function calculateDataHash(data) {
             return JSON.stringify(data).split('').reduce((a, b) => {
                 a = ((a << 5) - a) + b.charCodeAt(0);
@@ -843,7 +922,6 @@
             }, 0);
         }
 
-        // 自動上傳管理器
         const AutoUploadManager = {
             start: function() {
                 if (!app.autoUploadEnabled || !app.token) {
@@ -861,10 +939,8 @@
                 app.autoUploadInterval = setInterval(async () => {
                     if (!app.data) return;
 
-                    // 計算當前資料雜湊值
                     const currentHash = calculateDataHash(app.data);
                     
-                    // 如果資料沒有變更，跳過上傳
                     if (app.lastDataHash === currentHash) {
                         console.log('資料無變更，跳過自動上傳');
                         return;
@@ -908,7 +984,7 @@
                 };
 
                 const body = {
-                    description: `曼陀羅專案管理系統資料 - ${app.currentProject} (自動上傳)`,
+                    description: `曼陀羅專案管理系統資料 - ${app.currentProject} (Sidebar修復版自動上傳)`,
                     public: false,
                     files: {
                         'mandala_data.json': {
@@ -946,6 +1022,122 @@
             }
         };
 
+        // 視圖切換功能
+        function setView(view) {
+            app.currentView = view;
+            localStorage.setItem('current_view', view);
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.view-controls button').forEach(btn => {
+                btn.classList.remove('view-active');
+            });
+            document.getElementById(`view${view}`).classList.add('view-active');
+            
+            // 重新渲染
+            if (view === '9x9') {
+                renderNineByNine();
+                updateBreadcrumb9x9();
+            } else {
+                if (app.currentLayer === 'main') {
+                    renderMainLayer();
+                } else {
+                    renderSubLayer(app.currentLayer);
+                }
+                updateBreadcrumb();
+            }
+            
+            syncUrl(true);
+            console.log('視圖已切換為:', view);
+        }
+
+        // 9×9 視圖渲染
+        function renderNineByNine() {
+            const grid = document.getElementById('mandalaGrid');
+            const project = app.data.projects[app.currentProject];
+            
+            grid.className = 'mandala-grid view-9x9';
+            grid.innerHTML = '';
+            
+            // 渲染 9×9 = 81 個格子
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    const blockRow = Math.floor(row / 3);
+                    const blockCol = Math.floor(col / 3);
+                    const cellRow = row % 3;
+                    const cellCol = col % 3;
+                    
+                    const blockLetter = BLOCK_MAP[blockRow][blockCol];
+                    const subPosition = SUBCELL_LAYOUT[cellRow][cellCol];
+                    
+                    let cellKey, cellClass, cellLabel;
+                    
+                    if (blockLetter === 'CENTER') {
+                        if (subPosition === '') {
+                            // 中心格子
+                            cellKey = 'CENTER';
+                            cellClass = 'micro-cell micro-center';
+                            cellLabel = '中心';
+                        } else {
+                            // 中心區域的主層字母
+                            const mainLetter = ['F','C','G','B','','D','E','A','H'][cellRow * 3 + cellCol];
+                            if (mainLetter) {
+                                cellKey = mainLetter;
+                                cellClass = 'micro-cell micro-main';
+                                cellLabel = mainLetter;
+                            } else {
+                                // 空格
+                                cellKey = null;
+                                cellClass = 'micro-cell';
+                                cellLabel = '';
+                            }
+                        }
+                    } else {
+                        if (subPosition === '') {
+                            // 子層中心 (顯示主層內容)
+                            cellKey = blockLetter;
+                            cellClass = 'micro-cell micro-main';
+                            cellLabel = blockLetter;
+                        } else {
+                            // 子層格子
+                            cellKey = blockLetter + subPosition;
+                            cellClass = 'micro-cell micro-sub';
+                            cellLabel = blockLetter + subPosition;
+                        }
+                    }
+                    
+                    // 添加分隔線
+                    if ((col + 1) % 3 === 0 && col < 8) {
+                        cellClass += ' border-thick-right';
+                    }
+                    if ((row + 1) % 3 === 0 && row < 8) {
+                        cellClass += ' border-thick-bottom';
+                    }
+                    
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = cellClass;
+                    
+                    if (cellKey) {
+                        const cellContent = project.cells[cellKey] || '';
+                        cellDiv.innerHTML = `
+                            <div class="micro-label">${cellLabel}</div>
+                            <textarea class="micro-content" placeholder="輸入內容..." data-cell="${cellKey}">${cellContent}</textarea>
+                        `;
+                    } else {
+                        cellDiv.innerHTML = `<div class="micro-label"></div>`;
+                    }
+                    
+                    grid.appendChild(cellDiv);
+                }
+            }
+            
+            bindTextareaEvents();
+        }
+
+        function updateBreadcrumb9x9() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            breadcrumb.textContent = '9×9 總覽視圖';
+        }
+
         // 字體大小控制函數
         function setFontSize(size) {
             app.fontSize = size;
@@ -954,7 +1146,6 @@
             const container = document.getElementById('mainContainer');
             container.className = container.className.replace(/font-size-\w+/, '') + ` font-size-${size}`;
             
-            // 更新按鈕狀態
             document.querySelectorAll('.font-size-controls button').forEach(btn => {
                 btn.classList.remove('font-active');
             });
@@ -963,12 +1154,15 @@
             console.log('字體大小已更新為:', size);
         }
 
-        // 初始化字體大小
         function initFontSize() {
             setFontSize(app.fontSize);
         }
 
-        // 資料結構初始化
+        // 初始化視圖
+        function initView() {
+            setView(app.currentView);
+        }
+
         function createEmptyData() {
             const series = ['2.6','2.7','2.8','2.9'];
             const types = ['1','2','3','4','5','6','7'];
@@ -983,7 +1177,6 @@
                         cells: {
                             CENTER: '',
                             F: '', C: '', G: '', B: '', D: '', E: '', A: '', H: '',
-                            // 子層 F1-F8, C1-C8, G1-G8, B1-B8, D1-D8, E1-E8, A1-A8, H1-H8
                             F1: '', F2: '', F3: '', F4: '', F5: '', F6: '', F7: '', F8: '',
                             C1: '', C2: '', C3: '', C4: '', C5: '', C6: '', C7: '', C8: '',
                             G1: '', G2: '', G3: '', G4: '', G5: '', G6: '', G7: '', G8: '',
@@ -999,21 +1192,21 @@
             });
 
             return {
-                version: '2.3',  // 無快捷鍵版本
+                version: '4.1',
                 updatedAt: new Date().toISOString(),
                 meta: {
                     activeProject: app.currentProject,
                     fontSize: app.fontSize,
+                    currentView: app.currentView,
                     autoUpload: app.autoUploadEnabled,
                     autoUploadInterval: app.autoUploadIntervalMinutes,
-                    keyboardShortcuts: false,  // 標記為無快捷鍵版本
-                    schema: 'mandala-no-shortcuts-v2.3'
+                    keyboardShortcuts: false,
+                    schema: 'mandala-sidebar-fixed-v4.1'
                 },
                 projects: projects
             };
         }
 
-        // 版本遷移
         function migrateToV2(data) {
             if (!data.version || data.version === '1.0') {
                 const newData = createEmptyData();
@@ -1035,11 +1228,14 @@
                 return newData;
             }
             
-            // 設定遷移
             if (data.meta) {
                 if (data.meta.fontSize) {
                     app.fontSize = data.meta.fontSize;
                     localStorage.setItem('font_size', app.fontSize);
+                }
+                if (data.meta.currentView) {
+                    app.currentView = data.meta.currentView;
+                    localStorage.setItem('current_view', app.currentView);
                 }
                 if (data.meta.autoUpload !== undefined) {
                     app.autoUploadEnabled = data.meta.autoUpload;
@@ -1051,29 +1247,28 @@
                 }
             }
             
-            // 升級到無快捷鍵版本
-            if (!data.meta.schema || !data.meta.schema.includes('no-shortcuts')) {
-                data.version = '2.3';
-                data.meta.schema = 'mandala-no-shortcuts-v2.3';
+            if (!data.meta.schema || !data.meta.schema.includes('sidebar-fixed')) {
+                data.version = '4.1';
+                data.meta.schema = 'mandala-sidebar-fixed-v4.1';
+                data.meta.currentView = app.currentView;
                 data.meta.keyboardShortcuts = false;
                 data.meta.autoUpload = app.autoUploadEnabled;
                 data.meta.autoUploadInterval = app.autoUploadIntervalMinutes;
-                console.log('升級到無快捷鍵版本');
+                console.log('升級到Sidebar修復版本');
             }
             
             return data;
         }
 
-        // 強化的資料初始化
         function initData() {
-            console.log('🎯 無快捷鍵版：正在初始化資料...當前專案:', app.currentProject);
+            console.log('🎯 Sidebar修復版：正在初始化資料...當前專案:', app.currentProject);
             
             const loadedData = StorageManager.load();
             
             if (loadedData) {
                 try {
                     app.data = migrateToV2(loadedData);
-                    console.log('✅ 無快捷鍵版：資料載入成功');
+                    console.log('✅ Sidebar修復版：資料載入成功');
                 } catch (e) {
                     console.error('❌ 資料載入失敗:', e);
                     app.data = createEmptyData();
@@ -1084,6 +1279,7 @@
             }
             
             initFontSize();
+            initView();
             
             console.log('載入專案:', app.currentProject);
             loadProject(app.currentProject, false);
@@ -1096,7 +1292,6 @@
             app.lastDataHash = calculateDataHash(app.data);
         }
 
-        // 自動儲存機制
         function startAutoSave() {
             if (app.autoSaveInterval) {
                 clearInterval(app.autoSaveInterval);
@@ -1116,10 +1311,9 @@
                 }
             }, 10000);
             
-            console.log('🎯 無快捷鍵版：自動儲存已啟動');
+            console.log('🎯 Sidebar修復版：自動儲存已啟動');
         }
 
-        // 載入專案
         function loadProject(projectId, updateUrl = true) {
             console.log('載入專案:', projectId);
             if (!app.data || !app.data.projects[projectId]) {
@@ -1132,8 +1326,15 @@
             app.data.meta.activeProject = projectId;
             
             updateProjectTitle();
-            updateBreadcrumb();
-            renderMainLayer();
+            
+            if (app.currentView === '9x9') {
+                renderNineByNine();
+                updateBreadcrumb9x9();
+            } else {
+                updateBreadcrumb();
+                renderMainLayer();
+            }
+            
             updateActiveProject();
             
             if (updateUrl) {
@@ -1143,13 +1344,11 @@
             console.log('專案載入完成:', projectId);
         }
 
-        // 更新專案標題
         function updateProjectTitle() {
             const project = app.data.projects[app.currentProject];
             document.getElementById('projectTitle').textContent = project.title;
         }
 
-        // 更新麵包屑
         function updateBreadcrumb() {
             const breadcrumb = document.getElementById('breadcrumb');
             if (app.currentLayer === 'main') {
@@ -1159,11 +1358,11 @@
             }
         }
 
-        // 渲染主層
         function renderMainLayer() {
             const grid = document.getElementById('mandalaGrid');
             const project = app.data.projects[app.currentProject];
             
+            grid.className = 'mandala-grid';
             grid.innerHTML = `
                 <div class="grid-cell" data-position="F" onclick="enterLayer('F')">
                     <div class="cell-label">F</div>
@@ -1206,19 +1405,27 @@
             bindTextareaEvents();
         }
 
-        // 進入子層
         function enterLayer(layer) {
+            if (app.currentView === '9x9') {
+                // 在9×9視圖中，直接聚焦到對應區域
+                const textarea = document.querySelector(`[data-cell="${layer}"]`);
+                if (textarea) {
+                    textarea.focus();
+                }
+                return;
+            }
+            
             app.currentLayer = layer;
             updateBreadcrumb();
             renderSubLayer(layer);
             syncUrl(true);
         }
 
-        // 渲染子層
         function renderSubLayer(layer) {
             const grid = document.getElementById('mandalaGrid');
             const project = app.data.projects[app.currentProject];
             
+            grid.className = 'mandala-grid';
             grid.innerHTML = `
                 <div class="grid-cell sub-layer" data-position="${layer}6">
                     <div class="cell-label">${layer}6</div>
@@ -1261,7 +1468,6 @@
             bindTextareaEvents();
         }
 
-        // 返回主層
         function returnToMain() {
             app.currentLayer = 'main';
             updateBreadcrumb();
@@ -1269,23 +1475,19 @@
             syncUrl(true);
         }
 
-        // 🎯 無快捷鍵版：簡化的文字框事件綁定（移除所有鍵盤快捷鍵）
         function bindTextareaEvents() {
-            document.querySelectorAll('.cell-content').forEach(textarea => {
-                // 輸入事件處理
+            document.querySelectorAll('.cell-content, .micro-content').forEach(textarea => {
                 textarea.addEventListener('input', function() {
                     const cell = this.getAttribute('data-cell');
                     if (cell && app.data.projects[app.currentProject]) {
                         app.data.projects[app.currentProject].cells[cell] = this.value;
                         
-                        // 即時儲存到 sessionStorage
                         try {
                             sessionStorage.setItem(StorageManager.keys.session, JSON.stringify(app.data));
                         } catch (e) {
                             console.warn('即時儲存失敗:', e);
                         }
                         
-                        // 防抖儲存
                         clearTimeout(this.saveTimeout);
                         this.saveTimeout = setTimeout(() => {
                             saveToStorage(true);
@@ -1293,10 +1495,6 @@
                     }
                 });
 
-                // 🎯 無快捷鍵版：移除所有鍵盤快捷鍵事件處理
-                // 不再處理 Enter 自動添加前綴、Ctrl/Cmd+; 插入日期等快捷鍵
-
-                // 失去焦點時立即儲存
                 textarea.addEventListener('blur', function() {
                     const cell = this.getAttribute('data-cell');
                     if (cell && app.data.projects[app.currentProject]) {
@@ -1307,7 +1505,6 @@
             });
         }
 
-        // 更新活動專案
         function updateActiveProject() {
             document.querySelectorAll('.project-item').forEach(item => {
                 item.classList.remove('active');
@@ -1315,11 +1512,14 @@
             const activeItem = document.querySelector(`[data-project="${app.currentProject}"]`);
             if (activeItem) {
                 activeItem.classList.add('active');
+                // 讓選到的項目自動捲入視窗
+                if (typeof activeItem.scrollIntoView === 'function') {
+                    activeItem.scrollIntoView({ block: 'nearest' });
+                }
                 console.log('設定活動專案視覺狀態:', app.currentProject);
             }
         }
 
-        // URL 同步功能
         function syncUrl(replace) {
             try {
                 const params = new URLSearchParams(window.location.search);
@@ -1328,6 +1528,9 @@
                 }
                 if (app.currentLayer) {
                     params.set('layer', app.currentLayer === 'main' ? 'main' : app.currentLayer);
+                }
+                if (app.currentView) {
+                    params.set('view', app.currentView);
                 }
                 if (app.gistId) {
                     params.set('gist', app.gistId);
@@ -1342,21 +1545,21 @@
             }
         }
 
-        // 強化的儲存函數
         function saveToStorage(showIndicator = true) {
             if (!app.data) return false;
             
             app.data.updatedAt = new Date().toISOString();
             app.data.meta.fontSize = app.fontSize;
+            app.data.meta.currentView = app.currentView;
             app.data.meta.autoUpload = app.autoUploadEnabled;
             app.data.meta.autoUploadInterval = app.autoUploadIntervalMinutes;
-            app.data.meta.keyboardShortcuts = false;  // 標記為無快捷鍵版本
+            app.data.meta.keyboardShortcuts = false;
             app.lastSaveTime = Date.now();
             
             const success = StorageManager.save(app.data, showIndicator);
             
             if (success) {
-                console.log('🎯 無快捷鍵版：多重儲存成功');
+                console.log('🎯 Sidebar修復版：多重儲存成功');
             } else {
                 console.error('❌ 所有儲存位置都失敗');
             }
@@ -1364,12 +1567,10 @@
             return success;
         }
 
-        // 相容性：保持原有函數名稱
         function saveToLocalStorage() {
             return saveToStorage(true);
         }
 
-        // 本地儲存
         function saveLocal() {
             const success = saveToStorage(true);
             if (success) {
@@ -1386,7 +1587,6 @@
             }
         }
 
-        // 本地載入
         function loadLocal() {
             const loadedData = StorageManager.load();
             if (!loadedData) {
@@ -1403,7 +1603,6 @@
             }
         }
 
-        // JSON 匯出
         function exportJSON() {
             const blob = new Blob([JSON.stringify(app.data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -1416,7 +1615,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // JSON 匯入
         function importJSONFile() {
             document.getElementById('importJSONInput').click();
         }
@@ -1440,7 +1638,6 @@
             reader.readAsText(file);
         }
 
-        // OPML 匯出
         function exportOPML() {
             const project = app.data.projects[app.currentProject];
             const now = new Date();
@@ -1451,7 +1648,7 @@
     <head>
         <title>曼陀羅專案: ${project.title}</title>
         <dateCreated>${timestamp}</dateCreated>
-        <generator>曼陀羅專案管理系統 v3.7 - 無快捷鍵版</generator>
+        <generator>曼陀羅專案管理系統 v4.1 - Sidebar修復版</generator>
     </head>
     <body>
         <outline text="中心主題: ${escapeXml(project.cells.CENTER)}">`;
@@ -1487,7 +1684,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // OPML 匯入
         function importOPML() {
             document.getElementById('importOPMLInput').click();
         }
@@ -1544,7 +1740,9 @@
                     });
                     
                     saveToStorage(true);
-                    if (app.currentLayer === 'main') {
+                    if (app.currentView === '9x9') {
+                        renderNineByNine();
+                    } else if (app.currentLayer === 'main') {
                         renderMainLayer();
                     } else {
                         renderSubLayer(app.currentLayer);
@@ -1558,7 +1756,6 @@
             reader.readAsText(file);
         }
 
-        // XML 轉義
         function escapeXml(str) {
             return (str || '').replace(/[&<>"']/g, s => ({
                 "&": "&amp;",
@@ -1569,7 +1766,6 @@
             }[s]));
         }
 
-        // GitHub Gist 上傳
         async function uploadGist() {
             if (!app.token) {
                 alert('請先設定 GitHub Token');
@@ -1586,7 +1782,7 @@
                 };
 
                 const body = {
-                    description: `曼陀羅專案管理系統資料 - ${app.currentProject} (無快捷鍵版)`,
+                    description: `曼陀羅專案管理系統資料 - ${app.currentProject} (Sidebar修復版)`,
                     public: false,
                     files: {
                         'mandala_data.json': {
@@ -1631,7 +1827,6 @@
             }
         }
 
-        // GitHub Gist 下載
         async function downloadGist() {
             if (!app.token) {
                 alert('請先設定 GitHub Token');
@@ -1684,14 +1879,13 @@
             }
         }
 
-        // 分享 Gist
         function shareGist() {
             if (!app.gistId) {
                 alert('請先上傳資料到 GitHub');
                 return;
             }
             
-            const shareUrl = `${window.location.origin}${window.location.pathname}?gist=${app.gistId}&project=${encodeURIComponent(app.currentProject)}&layer=${encodeURIComponent(app.currentLayer)}`;
+            const shareUrl = `${window.location.origin}${window.location.pathname}?gist=${app.gistId}&project=${encodeURIComponent(app.currentProject)}&layer=${encodeURIComponent(app.currentLayer)}&view=${encodeURIComponent(app.currentView)}`;
             
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(shareUrl).then(() => {
@@ -1714,7 +1908,6 @@
             alert(`分享網址：\n${url}\n\n(已複製到剪貼簿)`);
         }
 
-        // 清除 A-H
         function clearAH() {
             if (!confirm('確定要清除當前專案的 A-H 格子內容嗎？')) return;
             
@@ -1729,14 +1922,15 @@
             });
             
             saveToStorage(true);
-            if (app.currentLayer === 'main') {
+            if (app.currentView === '9x9') {
+                renderNineByNine();
+            } else if (app.currentLayer === 'main') {
                 renderMainLayer();
             } else {
                 renderSubLayer(app.currentLayer);
             }
         }
 
-        // 清除全部
         function clearAll() {
             if (!confirm('確定要清除當前專案的所有內容嗎？此操作無法復原！')) return;
             
@@ -1746,27 +1940,26 @@
             });
             
             saveToStorage(true);
-            if (app.currentLayer === 'main') {
+            if (app.currentView === '9x9') {
+                renderNineByNine();
+            } else if (app.currentLayer === 'main') {
                 renderMainLayer();
             } else {
                 renderSubLayer(app.currentLayer);
             }
         }
 
-        // 同步狀態
         function setSyncStatus(status, text) {
             const statusEl = document.getElementById('syncStatus');
             statusEl.className = `sync-status ${status}`;
             statusEl.querySelector('span').textContent = text;
         }
 
-        // 側邊欄切換
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('collapsed');
         }
 
-        // GitHub 模態框
         function showGitHubModal() {
             document.getElementById('githubToken').value = app.token;
             document.getElementById('gistId').value = app.gistId || '';
@@ -1821,9 +2014,9 @@
             closeGitHubModal();
         }
 
-        // ✅ 修正②：事件代理版本（不 clone、不 overlay）
+        // 修復版本的專案點擊處理函數
         function setupProjectClickHandlers() {
-            console.log('🎯 無快捷鍵版：設定專案點擊事件（事件代理）');
+            console.log('🎯 Sidebar修復版：設定專案點擊事件（事件代理）');
             
             const list = document.getElementById('projectList');
             if (!list) {
@@ -1831,6 +2024,7 @@
                 return;
             }
 
+            // 事件代理：處理所有點擊（含觸控）
             const handler = (e) => {
                 const item = e.target.closest('.project-item');
                 if (!item || !list.contains(item)) return;
@@ -1839,13 +2033,13 @@
                 if (projectId && projectId !== app.currentProject) {
                     loadProject(projectId);
                 }
-                // 不阻止冒泡，避免影響其他功能
+                // 不阻止冒泡，以免影響其他正常行為
             };
 
             list.addEventListener('click', handler, false);
             list.addEventListener('touchstart', handler, { passive: true });
 
-            // 可鍵盤操作（Enter / Space）
+            // 可鍵盤操作（Enter/Space）
             list.querySelectorAll('.project-item').forEach(it => {
                 it.setAttribute('tabindex', '0');
                 it.setAttribute('role', 'button');
@@ -1861,11 +2055,10 @@
             console.log('✅ 專案點擊事件處理器就緒（無 clone / 無 overlay）');
         }
 
-        // DOMContentLoaded 事件監聽
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🎯 無快捷鍵版：DOM 載入完成，開始初始化...');
+            console.log('🎯 Sidebar修復版：DOM 載入完成，開始初始化...');
             console.log('URL 參數:', urlParams);
-            console.log('初始專案:', app.currentProject);
+            console.log('初始專案:', app.currentProject, '視圖:', app.currentView);
             
             initData();
             setupProjectClickHandlers();
@@ -1880,7 +2073,7 @@
                 downloadGist().then(() => {
                     if (urlParams.project) {
                         loadProject(urlParams.project, false);
-                        if (urlParams.layer && urlParams.layer !== 'main') {
+                        if (urlParams.layer && urlParams.layer !== 'main' && urlParams.view !== '9x9') {
                             setTimeout(() => enterLayer(urlParams.layer), 100);
                         }
                     }
@@ -1888,7 +2081,7 @@
             } else if (urlParams.gist && !app.token) {
                 alert('檢測到分享連結，請先設定 GitHub Token 後下載資料');
                 showGitHubModal();
-            } else if (urlParams.layer && urlParams.layer !== 'main') {
+            } else if (urlParams.layer && urlParams.layer !== 'main' && urlParams.view !== '9x9') {
                 setTimeout(() => enterLayer(urlParams.layer), 100);
             }
 
@@ -1905,13 +2098,13 @@
                 }
             });
             
-            console.log('🎯 無快捷鍵版：初始化完成，當前專案:', app.currentProject, '當前層級:', app.currentLayer);
+            console.log('🎯 Sidebar修復版：初始化完成');
+            console.log('當前專案:', app.currentProject, '當前層級:', app.currentLayer, '當前視圖:', app.currentView);
             console.log('自動上傳狀態:', app.autoUploadEnabled ? `啟用 (${app.autoUploadIntervalMinutes}分鐘)` : '停用');
         });
 
-        // 頁面即將離開時強制儲存
         window.addEventListener('beforeunload', function(e) {
-            console.log('🎯 無快捷鍵版：頁面即將離開，強制儲存...');
+            console.log('🎯 Sidebar修復版：頁面即將離開，強制儲存...');
             
             if (app.data) {
                 app.data.updatedAt = new Date().toISOString();
@@ -1934,26 +2127,30 @@
             }
         });
 
-        // 頁面可見性變化時儲存
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'hidden') {
-                console.log('🎯 無快捷鍵版：頁面隱藏，執行儲存...');
+                console.log('🎯 Sidebar修復版：頁面隱藏，執行儲存...');
                 saveToStorage(false);
             }
         });
 
-        // 瀏覽器前進後退處理
         window.addEventListener('popstate', function() {
             const params = parseUrlParams();
             const project = params.project || '2.6.1';
             const layer = params.layer || 'main';
+            const view = params.view || '3x3';
             
-            console.log('瀏覽器導航:', project, layer);
+            console.log('瀏覽器導航:', project, layer, view);
+            
+            if (view !== app.currentView) {
+                setView(view);
+            }
             
             if (project !== app.currentProject) {
                 loadProject(project, false);
             }
-            if (layer !== app.currentLayer) {
+            
+            if (layer !== app.currentLayer && view !== '9x9') {
                 if (layer === 'main') {
                     app.currentLayer = 'main';
                     updateBreadcrumb();
@@ -1966,19 +2163,14 @@
             }
         });
 
-        // 🎯 無快捷鍵版：移除所有鍵盤快捷鍵事件監聽器
-        // 不再監聽 keydown 事件以避免誤觸快捷鍵
-
-        // 模態框 ESC 鍵關閉（保留基本功能）
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeGitHubModal();
             }
         });
 
-        // 錯誤處理機制
         window.addEventListener('error', function(e) {
-            console.error('🎯 無快捷鍵版：捕獲全域錯誤:', e.error);
+            console.error('🎯 Sidebar修復版：捕獲全域錯誤:', e.error);
             
             if (app.data) {
                 try {
@@ -1990,13 +2182,21 @@
             }
         });
 
-        // 未處理的 Promise 錯誤
         window.addEventListener('unhandledrejection', function(e) {
-            console.error('🎯 無快捷鍵版：捕獲未處理的 Promise 錯誤:', e.reason);
+            console.error('🎯 Sidebar修復版：捕獲未處理的 Promise 錯誤:', e.reason);
             e.preventDefault();
         });
 
-        console.log('🎯 無快捷鍵版曼陀羅系統載入完成 - 所有鍵盤快捷鍵已移除');
+        console.log('🎯 曼陀羅專案管理系統 v4.1 - Sidebar修復版載入完成');
     </script>
 </body>
 </html>
+    <script id="html_badge_script1">
+        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDt0Enqtbpcy3Xv%2BJ1nakh8tN9CgamyGBbbeaLXQQ%2BmdZ3A27Cc97RPHGA0fiV52qOukJ%2FeefZwLEguyfE6%2FC9WyIxpyjcGIw96lQNxpTEt8vZ%2BAwtEi%2FjxMd6k%2FxWlvPdfQOa%2BtFnayRLHGA2FVEmCJLBs6fpkZH0KiV%2B3bhCn5%2FjpWMzgH6nzyvIPjiTk434mdykKVNiQmcaNw%2BtTEnVMSgiki3mJPXs%2FRJbE83NBsnNzba8UME7okDUTxe5KSura1978eI6pJyFw5wKnaAZxCGVPlc57uL9jPlOE1uF4o7Lu%2BIgw4KrorI8eYk3WEw96PBclDSMjKfO1PVf%2BG1cy4geUzsY%2BKhEiC08w2bdpBx%2BS4%2B27n4TE5ExaIkfOnS5L98kUoymqXw41SCwEO0jpoW6nxYbmNJQslj5w7gHqOpu8z1JKjg2TL%2F9h8q9uSy2dR5fs%2Fd2RxHWNkeDj5Ax68ZKfvgoSQK%2FZcA7gJcf7TaFB%2B0A%2FfSydIapbOQYyrfPg%3D%3D";
+        window.__genspark_locale = "zh-TW";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDt0Enqtbpcy3Xv+J1nakh8tN9CgamyGBbbeaLXQQ+mdZ3A27Cc97RPHGA0fiV52qOukJ/eefZwLEguyfE6/C9WyIxpyjcGIw96lQNxpTEt8vZ+AwtEi/jxMd6k/xWlvPdfQOa+tFnayRLHGA2FVEmCJLBs6fpkZH0KiV+3bhCn5/jpWMzgH6nzyvIPjiTk434mdykKVNiQmcaNw+tTEnVMSgiki3mJPXs/RJbE83NBsnNzba8UME7okDUTxe5KSura1978eI6pJyFw5wKnaAZxCGVPlc57uL9jPlOE1uF4o7Lu+Igw4KrorI8eYk3WEw96PBclDSMjKfO1PVf+G1cy4geUzsY+KhEiC08w2bdpBx+S4+27n4TE5ExaIkfOnS5L98kUoymqXw41SCwEO0jpoW6nxYbmNJQslj5w7gHqOpu8z1JKjg2TL/9h8q9uSy2dR5fs/d2RxHWNkeDj5Ax68ZKfvgoSQK/ZcA7gJcf7TaFB+0A/fSydIapbOQYyrfPg==";
+    </script>
+    
+    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
+    
