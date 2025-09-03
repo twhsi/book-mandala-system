@@ -977,7 +977,81 @@
 
             opml += `
         </outline>
-    </body>
+    
+<!-- URL sync patch: project/layer deep-linking -->
+<script>
+(function(){
+  function syncUrl(replace){
+    try{
+      const params = new URLSearchParams(window.location.search);
+      if (window.app && app.currentProject) {
+        params.set('project', app.currentProject);
+      }
+      if (window.app && app.currentLayer) {
+        params.set('layer', app.currentLayer === 'main' ? 'main' : app.currentLayer);
+      }
+      if (window.app && app.gistId) {
+        params.set('gist', app.gistId);
+      } else {
+        params.delete('gist');
+      }
+      const url = window.location.pathname + '?' + params.toString();
+      history[replace ? 'replaceState' : 'pushState']({}, '', url);
+    }catch(e){ console.warn('syncUrl failed', e); }
+  }
+
+  // Wrap core functions to keep URL in sync
+  if (typeof loadProject === 'function') {
+    const _origLoadProject = loadProject;
+    window.loadProject = function(projectId){
+      _origLoadProject(projectId);
+      syncUrl(false);
+    };
+  }
+  if (typeof enterLayer === 'function') {
+    const _origEnterLayer = enterLayer;
+    window.enterLayer = function(layer){
+      _origEnterLayer(layer);
+      syncUrl(true);
+    };
+  }
+  if (typeof returnToMain === 'function') {
+    const _origReturnToMain = returnToMain;
+    window.returnToMain = function(){
+      _origReturnToMain();
+      syncUrl(true);
+    };
+  }
+
+  // On first load: respect ?project=&layer= params
+  document.addEventListener('DOMContentLoaded', function(){
+    const p = new URLSearchParams(window.location.search);
+    const project = p.get('project');
+    const layer = p.get('layer');
+
+    if (project) {
+      try { app.currentProject = project; } catch(e){}
+      if (typeof loadProject === 'function') {
+        // slight delay to allow app init
+        setTimeout(function(){ loadProject(project); if(layer && layer!=='main' && typeof enterLayer==='function'){ enterLayer(layer); } syncUrl(true); }, 0);
+      }
+    } else {
+      // Ensure URL always reflects current state
+      setTimeout(function(){ syncUrl(true); }, 0);
+    }
+
+    window.addEventListener('popstate', function(){
+      // When using browser back/forward, restore from URL
+      const p2 = new URLSearchParams(window.location.search);
+      const pj = p2.get('project'); const ly = p2.get('layer') || 'main';
+      if (pj && typeof loadProject==='function') { loadProject(pj); }
+      if (ly && ly!=='main' && typeof enterLayer==='function') { enterLayer(ly); }
+    });
+  });
+})();
+</script>
+
+</body>
 </opml>`;
 
             const blob = new Blob([opml], { type: 'text/xml' });
@@ -1197,7 +1271,7 @@
                 return;
             }
             
-            const shareUrl = `${window.location.origin}${window.location.pathname}?gist=${app.gistId}`;
+            const shareUrl = `${window.location.origin}${window.location.pathname}?gist=${app.gistId}&project=${encodeURIComponent(app.currentProject)}&layer=${encodeURIComponent(app.currentLayer)}`;
             
             // 複製到剪貼簿
             if (navigator.clipboard) {
@@ -1395,5 +1469,79 @@
             }
         });
     </script>
+
+<!-- URL sync patch: project/layer deep-linking -->
+<script>
+(function(){
+  function syncUrl(replace){
+    try{
+      const params = new URLSearchParams(window.location.search);
+      if (window.app && app.currentProject) {
+        params.set('project', app.currentProject);
+      }
+      if (window.app && app.currentLayer) {
+        params.set('layer', app.currentLayer === 'main' ? 'main' : app.currentLayer);
+      }
+      if (window.app && app.gistId) {
+        params.set('gist', app.gistId);
+      } else {
+        params.delete('gist');
+      }
+      const url = window.location.pathname + '?' + params.toString();
+      history[replace ? 'replaceState' : 'pushState']({}, '', url);
+    }catch(e){ console.warn('syncUrl failed', e); }
+  }
+
+  // Wrap core functions to keep URL in sync
+  if (typeof loadProject === 'function') {
+    const _origLoadProject = loadProject;
+    window.loadProject = function(projectId){
+      _origLoadProject(projectId);
+      syncUrl(false);
+    };
+  }
+  if (typeof enterLayer === 'function') {
+    const _origEnterLayer = enterLayer;
+    window.enterLayer = function(layer){
+      _origEnterLayer(layer);
+      syncUrl(true);
+    };
+  }
+  if (typeof returnToMain === 'function') {
+    const _origReturnToMain = returnToMain;
+    window.returnToMain = function(){
+      _origReturnToMain();
+      syncUrl(true);
+    };
+  }
+
+  // On first load: respect ?project=&layer= params
+  document.addEventListener('DOMContentLoaded', function(){
+    const p = new URLSearchParams(window.location.search);
+    const project = p.get('project');
+    const layer = p.get('layer');
+
+    if (project) {
+      try { app.currentProject = project; } catch(e){}
+      if (typeof loadProject === 'function') {
+        // slight delay to allow app init
+        setTimeout(function(){ loadProject(project); if(layer && layer!=='main' && typeof enterLayer==='function'){ enterLayer(layer); } syncUrl(true); }, 0);
+      }
+    } else {
+      // Ensure URL always reflects current state
+      setTimeout(function(){ syncUrl(true); }, 0);
+    }
+
+    window.addEventListener('popstate', function(){
+      // When using browser back/forward, restore from URL
+      const p2 = new URLSearchParams(window.location.search);
+      const pj = p2.get('project'); const ly = p2.get('layer') || 'main';
+      if (pj && typeof loadProject==='function') { loadProject(pj); }
+      if (ly && ly!=='main' && typeof enterLayer==='function') { enterLayer(ly); }
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
