@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>曼陀羅專案管理系統 v3.4 - 修復版</title>
+    <title>曼陀羅專案管理系統 v3.4 - 深度連結修復版</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
@@ -580,15 +580,32 @@
     <input type="file" id="importOPMLInput" accept=".opml,.xml" style="display: none;" onchange="handleOPMLImport(this)">
 
     <script>
-        // 全域變數
+        // 🎯 修復重點：先解析 URL 參數再初始化
+        function parseUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                project: params.get('project'),
+                layer: params.get('layer'),
+                gist: params.get('gist')
+            };
+        }
+
+        // 從 URL 參數或預設值獲取初始專案
+        const urlParams = parseUrlParams();
+        const initialProject = urlParams.project || '2.6.1';
+        const initialLayer = urlParams.layer || 'main';
+
+        // 全域變數 - 使用 URL 參數作為初始值
         let app = {
             data: null,
-            currentProject: '2.6.1',
-            currentLayer: 'main', // 'main' 或 'A', 'B', 'C'...
-            gistId: localStorage.getItem('gist_id') || null,
+            currentProject: initialProject,  // 🎯 修復：使用 URL 參數
+            currentLayer: initialLayer,      // 🎯 修復：使用 URL 參數
+            gistId: urlParams.gist || localStorage.getItem('gist_id') || null,
             token: localStorage.getItem('github_token') || '',
             noteMode: localStorage.getItem('note_mode') === 'true'
         };
+
+        console.log('初始專案設定:', app.currentProject, '初始層級:', app.currentLayer);
 
         // 資料結構初始化
         function createEmptyData() {
@@ -624,7 +641,7 @@
                 version: '2.0',
                 updatedAt: new Date().toISOString(),
                 meta: {
-                    activeProject: '2.6.1',
+                    activeProject: app.currentProject,  // 🎯 修復：使用當前專案
                     noteMode: app.noteMode,
                     schema: 'mandala-v2.0'
                 },
@@ -660,7 +677,7 @@
 
         // 初始化
         function initData() {
-            console.log('正在初始化資料...');
+            console.log('正在初始化資料...當前專案:', app.currentProject);
             const raw = localStorage.getItem('mandala_data_v2') || localStorage.getItem('mandala_data');
             if (raw) {
                 try {
@@ -675,15 +692,16 @@
                 app.data = createEmptyData();
             }
             
-            // 更新介面
-            loadProject(app.currentProject);
+            // 🎯 修復：確保載入正確的專案
+            console.log('載入專案:', app.currentProject);
+            loadProject(app.currentProject, false); // 不更新 URL
         }
 
-        // 載入專案
-        function loadProject(projectId) {
+        // 載入專案 - 🎯 修復：新增 updateUrl 參數
+        function loadProject(projectId, updateUrl = true) {
             console.log('載入專案:', projectId);
             if (!app.data || !app.data.projects[projectId]) {
-                console.error('專案不存在:', projectId);
+                console.error('專案不存在:', projectId, '可用專案:', Object.keys(app.data?.projects || {}));
                 return;
             }
             
@@ -695,6 +713,10 @@
             updateBreadcrumb();
             renderMainLayer();
             updateActiveProject();
+            
+            if (updateUrl) {
+                syncUrl(false);
+            }
             
             console.log('專案載入完成:', projectId);
         }
@@ -767,6 +789,7 @@
             app.currentLayer = layer;
             updateBreadcrumb();
             renderSubLayer(layer);
+            syncUrl(true);
         }
 
         // 渲染子層
@@ -822,6 +845,7 @@
             app.currentLayer = 'main';
             updateBreadcrumb();
             renderMainLayer();
+            syncUrl(true);
         }
 
         // 綁定文字框事件
@@ -877,6 +901,30 @@
             const activeItem = document.querySelector(`[data-project="${app.currentProject}"]`);
             if (activeItem) {
                 activeItem.classList.add('active');
+                console.log('設定活動專案視覺狀態:', app.currentProject);
+            }
+        }
+
+        // URL 同步功能
+        function syncUrl(replace) {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (app.currentProject) {
+                    params.set('project', app.currentProject);
+                }
+                if (app.currentLayer) {
+                    params.set('layer', app.currentLayer === 'main' ? 'main' : app.currentLayer);
+                }
+                if (app.gistId) {
+                    params.set('gist', app.gistId);
+                } else {
+                    params.delete('gist');
+                }
+                const url = window.location.pathname + '?' + params.toString();
+                history[replace ? 'replaceState' : 'pushState']({}, '', url);
+                console.log('URL 已更新:', url);
+            } catch(e) {
+                console.warn('syncUrl failed', e);
             }
         }
 
@@ -1323,14 +1371,16 @@
             closeGitHubModal();
         }
 
-        // 事件監聽 - 修復版本：使用事件代理模式
+        // 🎯 修復重點：DOMContentLoaded 事件監聽
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM 載入完成，開始初始化...');
+            console.log('URL 參數:', urlParams);
+            console.log('初始專案:', app.currentProject);
             
             // 初始化資料
             initData();
             
-            // ===== 修復重點：使用事件代理模式綁定專案點擊事件 =====
+            // 🎯 修復：使用事件代理模式綁定專案點擊事件
             const projectList = document.getElementById('projectList');
             if (projectList) {
                 projectList.addEventListener('click', function(e) {
@@ -1338,7 +1388,7 @@
                     if (item) {
                         const projectId = item.getAttribute('data-project');
                         console.log('點擊專案項目:', projectId);
-                        if (projectId) {
+                        if (projectId && projectId !== app.currentProject) {
                             loadProject(projectId);
                         }
                     }
@@ -1348,33 +1398,24 @@
                 console.error('找不到 projectList 元素');
             }
 
-            // 檢查 URL 參數
-            const urlParams = new URLSearchParams(window.location.search);
-            const gistId = urlParams.get('gist');
-            const projectParam = urlParams.get('project');
-            const layerParam = urlParams.get('layer');
-            
-            if (gistId) {
-                app.gistId = gistId;
-                localStorage.setItem('gist_id', gistId);
-                if (app.token) {
-                    downloadGist().then(() => {
-                        if (projectParam) {
-                            loadProject(projectParam);
-                            if (layerParam && layerParam !== 'main') {
-                                setTimeout(() => enterLayer(layerParam), 100);
-                            }
+            // 🎯 修復：處理 Gist 下載
+            if (urlParams.gist && app.token) {
+                console.log('檢測到 Gist 參數，準備下載...');
+                downloadGist().then(() => {
+                    // 下載完成後，根據 URL 參數載入正確的專案和層級
+                    if (urlParams.project) {
+                        loadProject(urlParams.project, false);
+                        if (urlParams.layer && urlParams.layer !== 'main') {
+                            setTimeout(() => enterLayer(urlParams.layer), 100);
                         }
-                    });
-                } else {
-                    alert('檢測到分享連結，請先設定 GitHub Token 後下載資料');
-                    showGitHubModal();
-                }
-            } else if (projectParam) {
-                loadProject(projectParam);
-                if (layerParam && layerParam !== 'main') {
-                    setTimeout(() => enterLayer(layerParam), 100);
-                }
+                    }
+                });
+            } else if (urlParams.gist && !app.token) {
+                alert('檢測到分享連結，請先設定 GitHub Token 後下載資料');
+                showGitHubModal();
+            } else if (urlParams.layer && urlParams.layer !== 'main') {
+                // 沒有 Gist 但有層級參數，直接進入對應層級
+                setTimeout(() => enterLayer(urlParams.layer), 100);
             }
 
             // 檢查 GitHub Token
@@ -1389,7 +1430,31 @@
                 }
             });
             
-            console.log('初始化完成');
+            console.log('初始化完成，當前專案:', app.currentProject, '當前層級:', app.currentLayer);
+        });
+
+        // 瀏覽器前進後退處理
+        window.addEventListener('popstate', function() {
+            const params = parseUrlParams();
+            const project = params.project || '2.6.1';
+            const layer = params.layer || 'main';
+            
+            console.log('瀏覽器導航:', project, layer);
+            
+            if (project !== app.currentProject) {
+                loadProject(project, false);
+            }
+            if (layer !== app.currentLayer) {
+                if (layer === 'main') {
+                    app.currentLayer = 'main';
+                    updateBreadcrumb();
+                    renderMainLayer();
+                } else {
+                    app.currentLayer = layer;
+                    updateBreadcrumb();
+                    renderSubLayer(layer);
+                }
+            }
         });
 
         // 鍵盤快捷鍵
@@ -1434,73 +1499,14 @@
                 }
             }
         });
-
-        // URL 同步功能
-        function syncUrl(replace) {
-            try {
-                const params = new URLSearchParams(window.location.search);
-                if (app.currentProject) {
-                    params.set('project', app.currentProject);
-                }
-                if (app.currentLayer) {
-                    params.set('layer', app.currentLayer === 'main' ? 'main' : app.currentLayer);
-                }
-                if (app.gistId) {
-                    params.set('gist', app.gistId);
-                } else {
-                    params.delete('gist');
-                }
-                const url = window.location.pathname + '?' + params.toString();
-                history[replace ? 'replaceState' : 'pushState']({}, '', url);
-            } catch(e) {
-                console.warn('syncUrl failed', e);
-            }
-        }
-
-        // 包裝核心功能以保持 URL 同步
-        const _origLoadProject = loadProject;
-        loadProject = function(projectId) {
-            _origLoadProject(projectId);
-            syncUrl(false);
-        };
-
-        const _origEnterLayer = enterLayer;
-        enterLayer = function(layer) {
-            _origEnterLayer(layer);
-            syncUrl(true);
-        };
-
-        const _origReturnToMain = returnToMain;
-        returnToMain = function() {
-            _origReturnToMain();
-            syncUrl(true);
-        };
-
-        // 瀏覽器前進後退處理
-        window.addEventListener('popstate', function() {
-            const params = new URLSearchParams(window.location.search);
-            const project = params.get('project');
-            const layer = params.get('layer') || 'main';
-            
-            if (project && project !== app.currentProject) {
-                _origLoadProject(project);
-            }
-            if (layer && layer !== app.currentLayer) {
-                if (layer === 'main') {
-                    _origReturnToMain();
-                } else {
-                    _origEnterLayer(layer);
-                }
-            }
-        });
     </script>
 </body>
 </html>
     <script id="html_badge_script1">
         window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDuo%2FZxVsb62THqYzgm39oHoZWpWdZjdbNQmcD6T9SgbCUqM%2FuN5HgHYqZM5D4x8reGMg0eDhIqlWhMby%2BHiap8BW%2BGzWXwMYZTUawOwaKOIY0GDHKpWTK1OkFWe8VTEJYT5wRAIuuppDViyQOlP%2B3jvbJI1u9p0XNZkOD26NljpGn7J3E02anw5CaTHhQsf2u7dDqkQ7uOOSYrDd4zvYOG4xuwAhsK7U4iQtlUHcNoQ2snGEeBZFLaV850rj%2BHAauKsSA4d1%2BQ%2FnWpYbXQTqwByQiOCQVXsSYFnQ3HVcQQtm9L33uc2Ik16n9ij4CG6cuzZLKHWtzIbJ1jGQHoQ3LSfvp6mnFavBVqFz%2B0bbp7gSSNcxlJ8bs4oHWngJW79TFWI2S3oGovmAYpYM1Z1M0dWPYAgaVtvctjOaZUkxR8cmz5Tq47PPjTB%2FMma9hvgcI8U%2BaMYSNprPvsZ5B9ol919RoIZnjhfig2idqVqNeyoQdGfqAHAor6ok5CojXbpYxQ%3D%3D";
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDsq%2BoGZzU%2BEfnEvB2GyyrCg1dsVfGfvhgNoULb71l8Dy%2F6BpdqBMgJkoBxbrBhpElyv4vlr5WHqa%2F6e9TdcyNlkJcBfQFbwoBPZhM%2B03RhPT1scjxhI%2BDbXDXSEPT55TcLTCPgwQS6rLiFRvmZQPHky1glKpoM8QaYURJWNwAmjKna03Z%2Ban3HLZj0Iuoanj3ThSKwvq9N4K1rH5cClXtLfQGCTXD6Db7bLlg%2B8VXHl4ux1P9kB0mN9rNHK9oSTzIGhz7urHlGoxv3Rpjm8YYzbvHgsr9%2Fj0MdYlSG5duHNpjarh0MPkmo5A%2B8hmJOck4QLeGg7AdUmwEq1o%2BdeuStz8zNs%2FATDShvC%2FG03w8vXKGUiWv1EBTmwMp2LoKa0zEuy%2F6EvBJL02W4M85CgAbwDEpKuTBfSwRXpFlu6uTK58tuZDS%2BFoVNtX96CPcMrhY8DjEVRlNkEmF7JAyzwjP%2FJsBjwCvTKmbxCl32muUTFszcO5SCeuobCXpVtEUFPBIA%3D%3D";
         window.__genspark_locale = "zh-TW";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDuo/ZxVsb62THqYzgm39oHoZWpWdZjdbNQmcD6T9SgbCUqM/uN5HgHYqZM5D4x8reGMg0eDhIqlWhMby+Hiap8BW+GzWXwMYZTUawOwaKOIY0GDHKpWTK1OkFWe8VTEJYT5wRAIuuppDViyQOlP+3jvbJI1u9p0XNZkOD26NljpGn7J3E02anw5CaTHhQsf2u7dDqkQ7uOOSYrDd4zvYOG4xuwAhsK7U4iQtlUHcNoQ2snGEeBZFLaV850rj+HAauKsSA4d1+Q/nWpYbXQTqwByQiOCQVXsSYFnQ3HVcQQtm9L33uc2Ik16n9ij4CG6cuzZLKHWtzIbJ1jGQHoQ3LSfvp6mnFavBVqFz+0bbp7gSSNcxlJ8bs4oHWngJW79TFWI2S3oGovmAYpYM1Z1M0dWPYAgaVtvctjOaZUkxR8cmz5Tq47PPjTB/Mma9hvgcI8U+aMYSNprPvsZ5B9ol919RoIZnjhfig2idqVqNeyoQdGfqAHAor6ok5CojXbpYxQ==";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDsq+oGZzU+EfnEvB2GyyrCg1dsVfGfvhgNoULb71l8Dy/6BpdqBMgJkoBxbrBhpElyv4vlr5WHqa/6e9TdcyNlkJcBfQFbwoBPZhM+03RhPT1scjxhI+DbXDXSEPT55TcLTCPgwQS6rLiFRvmZQPHky1glKpoM8QaYURJWNwAmjKna03Z+an3HLZj0Iuoanj3ThSKwvq9N4K1rH5cClXtLfQGCTXD6Db7bLlg+8VXHl4ux1P9kB0mN9rNHK9oSTzIGhz7urHlGoxv3Rpjm8YYzbvHgsr9/j0MdYlSG5duHNpjarh0MPkmo5A+8hmJOck4QLeGg7AdUmwEq1o+deuStz8zNs/ATDShvC/G03w8vXKGUiWv1EBTmwMp2LoKa0zEuy/6EvBJL02W4M85CgAbwDEpKuTBfSwRXpFlu6uTK58tuZDS+FoVNtX96CPcMrhY8DjEVRlNkEmF7JAyzwjP/JsBjwCvTKmbxCl32muUTFszcO5SCeuobCXpVtEUFPBIA==";
     </script>
     
     <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
