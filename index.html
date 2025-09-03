@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>曼陀羅專案管理系統 v3.6 - 終極完整版</title>
+    <title>曼陀羅專案管理系統 v3.7 - 無快捷鍵版</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <style>
@@ -265,7 +265,7 @@
             font-weight: 600;
         }
 
-        /* 確保點擊區域覆蓋整個項目 */
+        /* ✅ 修正：讓 pseudo-element 不攔截點擊 */
         .project-item::before {
             content: '';
             position: absolute;
@@ -274,6 +274,7 @@
             right: 0;
             bottom: 0;
             z-index: 1;
+            pointer-events: none; /* 修正重點 */
         }
 
         .sync-status {
@@ -670,15 +671,6 @@
                 </div>
                 <div class="form-group">
                     <label>
-                        <input type="checkbox" class="form-checkbox" id="noteModeToggle">
-                        <span class="form-label" style="display: inline;">啟用筆記模式</span>
-                    </label>
-                    <div style="font-size: 10px; color: #6b7280; margin-top: 4px;">
-                        Enter鍵自動加前綴，Shift+Enter純換行，Ctrl/Cmd+;插入日期
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>
                         <input type="checkbox" class="form-checkbox" id="autoUploadToggle">
                         <span class="form-label" style="display: inline;">啟用自動上傳</span>
                     </label>
@@ -710,7 +702,7 @@
     <input type="file" id="importOPMLInput" accept=".opml,.xml" style="display: none;" onchange="handleOPMLImport(this)">
 
     <script>
-        // 🎯 終極版本重點：自動定時上傳 + 完全修復左側選單
+        // 🎯 無快捷鍵版本：移除所有鍵盤快捷鍵功能
         
         // 全域儲存管理器
         const StorageManager = {
@@ -757,7 +749,7 @@
                     console.warn('會話儲存失敗:', e);
                 }
                 
-                console.log(`終極版儲存: ${savedCount}/3 儲存位置成功`);
+                console.log(`無快捷鍵版儲存: ${savedCount}/3 儲存位置成功`);
                 return savedCount > 0;
             },
             
@@ -809,7 +801,7 @@
             }
         };
 
-        // 🎯 修復重點：先解析 URL 參數再初始化
+        // 先解析 URL 參數再初始化
         function parseUrlParams() {
             const params = new URLSearchParams(window.location.search);
             return {
@@ -827,22 +819,21 @@
         // 全域變數 - 使用 URL 參數作為初始值
         let app = {
             data: null,
-            currentProject: initialProject,  // 🎯 修復：使用 URL 參數
-            currentLayer: initialLayer,      // 🎯 修復：使用 URL 參數
+            currentProject: initialProject,
+            currentLayer: initialLayer,
             gistId: urlParams.gist || localStorage.getItem('gist_id') || null,
             token: localStorage.getItem('github_token') || '',
-            noteMode: localStorage.getItem('note_mode') === 'true',
-            fontSize: localStorage.getItem('font_size') || 'medium',  // 字體大小設定
-            autoSaveInterval: null,  // 自動儲存計時器
-            autoUploadInterval: null,  // 🎯 新增：自動上傳計時器
-            autoUploadEnabled: localStorage.getItem('auto_upload_enabled') === 'true',  // 🎯 新增：是否啟用自動上傳
-            autoUploadIntervalMinutes: parseInt(localStorage.getItem('auto_upload_interval')) || 10,  // 🎯 新增：上傳間隔
-            lastSaveTime: Date.now(),  // 最後儲存時間
-            lastUploadTime: Date.now(),  // 🎯 新增：最後上傳時間
-            lastDataHash: null  // 🎯 新增：用於檢測資料變更
+            fontSize: localStorage.getItem('font_size') || 'medium',
+            autoSaveInterval: null,
+            autoUploadInterval: null,
+            autoUploadEnabled: localStorage.getItem('auto_upload_enabled') === 'true',
+            autoUploadIntervalMinutes: parseInt(localStorage.getItem('auto_upload_interval')) || 10,
+            lastSaveTime: Date.now(),
+            lastUploadTime: Date.now(),
+            lastDataHash: null
         };
 
-        console.log('🎯 終極版初始化 - 專案:', app.currentProject, '層級:', app.currentLayer);
+        console.log('🎯 無快捷鍵版初始化 - 專案:', app.currentProject, '層級:', app.currentLayer);
 
         // 計算資料雜湊值，用於檢測變更
         function calculateDataHash(data) {
@@ -852,7 +843,7 @@
             }, 0);
         }
 
-        // 🎯 新增：自動上傳管理器
+        // 自動上傳管理器
         const AutoUploadManager = {
             start: function() {
                 if (!app.autoUploadEnabled || !app.token) {
@@ -1008,15 +999,15 @@
             });
 
             return {
-                version: '2.2',  // 版本升級到終極版
+                version: '2.3',  // 無快捷鍵版本
                 updatedAt: new Date().toISOString(),
                 meta: {
                     activeProject: app.currentProject,
-                    noteMode: app.noteMode,
                     fontSize: app.fontSize,
                     autoUpload: app.autoUploadEnabled,
                     autoUploadInterval: app.autoUploadIntervalMinutes,
-                    schema: 'mandala-ultimate-v2.2'  // 終極版本標記
+                    keyboardShortcuts: false,  // 標記為無快捷鍵版本
+                    schema: 'mandala-no-shortcuts-v2.3'
                 },
                 projects: projects
             };
@@ -1025,14 +1016,12 @@
         // 版本遷移
         function migrateToV2(data) {
             if (!data.version || data.version === '1.0') {
-                // 舊版本遷移邏輯
                 const newData = createEmptyData();
                 if (data.projects) {
                     Object.keys(data.projects).forEach(projectId => {
                         if (newData.projects[projectId]) {
                             const oldProject = data.projects[projectId];
                             if (oldProject.data) {
-                                // 遷移舊的9格資料到新結構
                                 Object.keys(oldProject.data).forEach(cell => {
                                     if (newData.projects[projectId].cells[cell] !== undefined) {
                                         newData.projects[projectId].cells[cell] = oldProject.data[cell];
@@ -1046,7 +1035,7 @@
                 return newData;
             }
             
-            // 新增功能設定的遷移
+            // 設定遷移
             if (data.meta) {
                 if (data.meta.fontSize) {
                     app.fontSize = data.meta.fontSize;
@@ -1062,29 +1051,29 @@
                 }
             }
             
-            // 升級到終極版本
-            if (!data.meta.schema || !data.meta.schema.includes('ultimate')) {
-                data.version = '2.2';
-                data.meta.schema = 'mandala-ultimate-v2.2';
+            // 升級到無快捷鍵版本
+            if (!data.meta.schema || !data.meta.schema.includes('no-shortcuts')) {
+                data.version = '2.3';
+                data.meta.schema = 'mandala-no-shortcuts-v2.3';
+                data.meta.keyboardShortcuts = false;
                 data.meta.autoUpload = app.autoUploadEnabled;
                 data.meta.autoUploadInterval = app.autoUploadIntervalMinutes;
-                console.log('升級到終極版本');
+                console.log('升級到無快捷鍵版本');
             }
             
             return data;
         }
 
-        // 🎯 終極版：強化的資料初始化
+        // 強化的資料初始化
         function initData() {
-            console.log('🎯 終極版：正在初始化資料...當前專案:', app.currentProject);
+            console.log('🎯 無快捷鍵版：正在初始化資料...當前專案:', app.currentProject);
             
-            // 嘗試從多個儲存位置載入
             const loadedData = StorageManager.load();
             
             if (loadedData) {
                 try {
                     app.data = migrateToV2(loadedData);
-                    console.log('✅ 終極版：資料載入成功');
+                    console.log('✅ 無快捷鍵版：資料載入成功');
                 } catch (e) {
                     console.error('❌ 資料載入失敗:', e);
                     app.data = createEmptyData();
@@ -1094,33 +1083,28 @@
                 app.data = createEmptyData();
             }
             
-            // 初始化字體大小
             initFontSize();
             
-            // 🎯 修復：確保載入正確的專案
             console.log('載入專案:', app.currentProject);
-            loadProject(app.currentProject, false); // 不更新 URL
+            loadProject(app.currentProject, false);
             
-            // 🎯 終極版：啟動自動儲存和自動上傳
             startAutoSave();
             if (app.autoUploadEnabled && app.token) {
                 AutoUploadManager.start();
             }
 
-            // 計算初始資料雜湊值
             app.lastDataHash = calculateDataHash(app.data);
         }
 
-        // 🎯 終極版：自動儲存機制
+        // 自動儲存機制
         function startAutoSave() {
-            // 每10秒自動儲存一次
             if (app.autoSaveInterval) {
                 clearInterval(app.autoSaveInterval);
             }
             
             app.autoSaveInterval = setInterval(() => {
-                if (Date.now() - app.lastSaveTime > 8000) { // 8秒內沒有手動儲存才自動儲存
-                    saveToStorage(false); // 不顯示指示器的自動儲存
+                if (Date.now() - app.lastSaveTime > 8000) {
+                    saveToStorage(false);
                     setSyncStatus('auto-save', '自動儲存');
                     setTimeout(() => {
                         if (app.token) {
@@ -1132,10 +1116,10 @@
                 }
             }, 10000);
             
-            console.log('🎯 終極版：自動儲存已啟動');
+            console.log('🎯 無快捷鍵版：自動儲存已啟動');
         }
 
-        // 載入專案 - 🎯 修復：新增 updateUrl 參數
+        // 載入專案
         function loadProject(projectId, updateUrl = true) {
             console.log('載入專案:', projectId);
             if (!app.data || !app.data.projects[projectId]) {
@@ -1235,7 +1219,6 @@
             const grid = document.getElementById('mandalaGrid');
             const project = app.data.projects[app.currentProject];
             
-            // 子層排列：6-3-7 / 2-中心-4 / 5-1-8
             grid.innerHTML = `
                 <div class="grid-cell sub-layer" data-position="${layer}6">
                     <div class="cell-label">${layer}6</div>
@@ -1286,23 +1269,23 @@
             syncUrl(true);
         }
 
-        // 🎯 終極版：強化的文字框事件綁定
+        // 🎯 無快捷鍵版：簡化的文字框事件綁定（移除所有鍵盤快捷鍵）
         function bindTextareaEvents() {
             document.querySelectorAll('.cell-content').forEach(textarea => {
-                // 🎯 終極版：更頻繁的即時儲存
+                // 輸入事件處理
                 textarea.addEventListener('input', function() {
                     const cell = this.getAttribute('data-cell');
                     if (cell && app.data.projects[app.currentProject]) {
                         app.data.projects[app.currentProject].cells[cell] = this.value;
                         
-                        // 🎯 終極版：立即儲存到 sessionStorage
+                        // 即時儲存到 sessionStorage
                         try {
                             sessionStorage.setItem(StorageManager.keys.session, JSON.stringify(app.data));
                         } catch (e) {
                             console.warn('即時儲存失敗:', e);
                         }
                         
-                        // 🎯 終極版：減少防抖時間（從800ms降到300ms）
+                        // 防抖儲存
                         clearTimeout(this.saveTimeout);
                         this.saveTimeout = setTimeout(() => {
                             saveToStorage(true);
@@ -1310,52 +1293,15 @@
                     }
                 });
 
-                // 🎯 終極版：鍵盤事件也觸發儲存
-                textarea.addEventListener('keydown', function(e) {
-                    // 筆記模式處理
-                    if (app.noteMode) {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            const pos = this.selectionStart;
-                            const value = this.value;
-                            const newValue = value.substring(0, pos) + '\n- ' + value.substring(this.selectionEnd);
-                            this.value = newValue;
-                            this.selectionStart = this.selectionEnd = pos + 3;
-                            this.dispatchEvent(new Event('input'));
-                        }
-                        
-                        if (e.key === ';' && (e.ctrlKey || e.metaKey)) {
-                            e.preventDefault();
-                            const pos = this.selectionStart;
-                            const date = new Date().toISOString().split('T')[0];
-                            const value = this.value;
-                            const newValue = value.substring(0, pos) + date + value.substring(this.selectionEnd);
-                            this.value = newValue;
-                            this.selectionStart = this.selectionEnd = pos + date.length;
-                            this.dispatchEvent(new Event('input'));
-                        }
-                    }
-                    
-                    // 🎯 終極版：特殊鍵觸發立即儲存
-                    if (e.key === 'Enter' || e.key === 'Tab' || (e.ctrlKey && e.key === 's')) {
-                        if (e.ctrlKey && e.key === 's') {
-                            e.preventDefault();
-                        }
-                        // 立即儲存
-                        const cell = this.getAttribute('data-cell');
-                        if (cell && app.data.projects[app.currentProject]) {
-                            app.data.projects[app.currentProject].cells[cell] = this.value;
-                            saveToStorage(true);
-                        }
-                    }
-                });
+                // 🎯 無快捷鍵版：移除所有鍵盤快捷鍵事件處理
+                // 不再處理 Enter 自動添加前綴、Ctrl/Cmd+; 插入日期等快捷鍵
 
-                // 🎯 終極版：失去焦點時立即儲存
+                // 失去焦點時立即儲存
                 textarea.addEventListener('blur', function() {
                     const cell = this.getAttribute('data-cell');
                     if (cell && app.data.projects[app.currentProject]) {
                         app.data.projects[app.currentProject].cells[cell] = this.value;
-                        saveToStorage(false); // 不顯示指示器
+                        saveToStorage(false);
                     }
                 });
             });
@@ -1396,7 +1342,7 @@
             }
         }
 
-        // 🎯 終極版：強化的儲存函數
+        // 強化的儲存函數
         function saveToStorage(showIndicator = true) {
             if (!app.data) return false;
             
@@ -1404,12 +1350,13 @@
             app.data.meta.fontSize = app.fontSize;
             app.data.meta.autoUpload = app.autoUploadEnabled;
             app.data.meta.autoUploadInterval = app.autoUploadIntervalMinutes;
+            app.data.meta.keyboardShortcuts = false;  // 標記為無快捷鍵版本
             app.lastSaveTime = Date.now();
             
             const success = StorageManager.save(app.data, showIndicator);
             
             if (success) {
-                console.log('🎯 終極版：多重儲存成功');
+                console.log('🎯 無快捷鍵版：多重儲存成功');
             } else {
                 console.error('❌ 所有儲存位置都失敗');
             }
@@ -1504,18 +1451,16 @@
     <head>
         <title>曼陀羅專案: ${project.title}</title>
         <dateCreated>${timestamp}</dateCreated>
-        <generator>曼陀羅專案管理系統 v3.6 - 終極完整版</generator>
+        <generator>曼陀羅專案管理系統 v3.7 - 無快捷鍵版</generator>
     </head>
     <body>
         <outline text="中心主題: ${escapeXml(project.cells.CENTER)}">`;
 
-            // 主層 A-H，每個包含 1-8 子層
             const mainCells = ['F', 'C', 'G', 'B', 'D', 'E', 'A', 'H'];
             mainCells.forEach(cell => {
                 opml += `
             <outline text="${cell}: ${escapeXml(project.cells[cell])}">`;
                 
-                // 子層 1-8
                 for (let i = 1; i <= 8; i++) {
                     const subCell = cell + i;
                     opml += `
@@ -1557,7 +1502,6 @@
                     const parser = new DOMParser();
                     const xml = parser.parseFromString(e.target.result, 'text/xml');
                     
-                    // 檢查錯誤
                     const parseError = xml.querySelector('parsererror');
                     if (parseError) {
                         throw new Error('XML 格式錯誤');
@@ -1566,7 +1510,6 @@
                     const project = app.data.projects[app.currentProject];
                     const outlines = xml.querySelectorAll('outline');
                     
-                    // 解析 OPML 結構
                     outlines.forEach(outline => {
                         const text = outline.getAttribute('text') || '';
                         const colonIndex = text.indexOf(':');
@@ -1575,15 +1518,12 @@
                             const key = text.substring(0, colonIndex).trim();
                             const value = text.substring(colonIndex + 1).trim();
                             
-                            // 中心主題
                             if (key === '中心主題') {
                                 project.cells.CENTER = value;
                             }
-                            // 主層 A-H
                             else if (['F','C','G','B','D','E','A','H'].includes(key)) {
                                 project.cells[key] = value;
                                 
-                                // 查找子層
                                 const subOutlines = outline.querySelectorAll('outline');
                                 subOutlines.forEach(subOutline => {
                                     const subText = subOutline.getAttribute('text') || '';
@@ -1597,7 +1537,6 @@
                                     }
                                 });
                             }
-                            // 直接的子層格子（向下相容）
                             else if (project.cells[key] !== undefined) {
                                 project.cells[key] = value;
                             }
@@ -1647,7 +1586,7 @@
                 };
 
                 const body = {
-                    description: `曼陀羅專案管理系統資料 - ${app.currentProject} (終極版)`,
+                    description: `曼陀羅專案管理系統資料 - ${app.currentProject} (無快捷鍵版)`,
                     public: false,
                     files: {
                         'mandala_data.json': {
@@ -1676,11 +1615,9 @@
                     saveToStorage(true);
                     setSyncStatus('synced', '已同步');
                     
-                    // 更新資料雜湊值
                     app.lastDataHash = calculateDataHash(app.data);
                     app.lastUploadTime = Date.now();
                     
-                    // 顯示分享資訊
                     const shareUrl = `${window.location.origin}${window.location.pathname}?gist=${app.gistId}`;
                     alert(`上傳成功！\n跨瀏覽器分享網址：\n${shareUrl}`);
                 } else {
@@ -1689,7 +1626,7 @@
             } catch (error) {
                 console.error('上傳失敗:', error);
                 setSyncStatus('error', '上傳失敗');
-                saveToStorage(true); // 本地備份
+                saveToStorage(true);
                 alert('上傳失敗: ' + error.message);
             }
         }
@@ -1732,7 +1669,6 @@
                     localStorage.setItem('gist_id', gistId);
                     saveToStorage(true);
                     
-                    // 更新資料雜湊值
                     app.lastDataHash = calculateDataHash(app.data);
                     
                     loadProject(app.currentProject);
@@ -1757,7 +1693,6 @@
             
             const shareUrl = `${window.location.origin}${window.location.pathname}?gist=${app.gistId}&project=${encodeURIComponent(app.currentProject)}&layer=${encodeURIComponent(app.currentLayer)}`;
             
-            // 複製到剪貼簿
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(shareUrl).then(() => {
                     alert(`分享網址已複製到剪貼簿：\n${shareUrl}`);
@@ -1788,7 +1723,6 @@
             
             cells.forEach(cell => {
                 project.cells[cell] = '';
-                // 清除對應的子層
                 for (let i = 1; i <= 8; i++) {
                     project.cells[cell + i] = '';
                 }
@@ -1836,11 +1770,9 @@
         function showGitHubModal() {
             document.getElementById('githubToken').value = app.token;
             document.getElementById('gistId').value = app.gistId || '';
-            document.getElementById('noteModeToggle').checked = app.noteMode;
             document.getElementById('autoUploadToggle').checked = app.autoUploadEnabled;
             document.getElementById('autoUploadInterval').value = app.autoUploadIntervalMinutes;
             
-            // 根據自動上傳開關顯示/隱藏間隔設定
             const intervalGroup = document.getElementById('autoUploadIntervalGroup');
             intervalGroup.style.display = app.autoUploadEnabled ? 'block' : 'none';
             
@@ -1854,7 +1786,6 @@
         function saveGitHubConfig() {
             app.token = document.getElementById('githubToken').value.trim();
             app.gistId = document.getElementById('gistId').value.trim() || null;
-            app.noteMode = document.getElementById('noteModeToggle').checked;
             app.autoUploadEnabled = document.getElementById('autoUploadToggle').checked;
             app.autoUploadIntervalMinutes = parseInt(document.getElementById('autoUploadInterval').value);
             
@@ -1872,17 +1803,13 @@
                 localStorage.removeItem('gist_id');
             }
             
-            localStorage.setItem('note_mode', app.noteMode);
             localStorage.setItem('auto_upload_enabled', app.autoUploadEnabled);
             localStorage.setItem('auto_upload_interval', app.autoUploadIntervalMinutes);
             
-            // 更新 app.data 中的設定
-            app.data.meta.noteMode = app.noteMode;
             app.data.meta.autoUpload = app.autoUploadEnabled;
             app.data.meta.autoUploadInterval = app.autoUploadIntervalMinutes;
             saveToStorage(true);
             
-            // 🎯 新增：管理自動上傳
             if (app.autoUploadEnabled && app.token) {
                 console.log('啟動自動上傳功能');
                 AutoUploadManager.start();
@@ -1894,113 +1821,63 @@
             closeGitHubModal();
         }
 
-        // 🎯 終極版：專案點擊事件處理器
+        // ✅ 修正②：事件代理版本（不 clone、不 overlay）
         function setupProjectClickHandlers() {
-            console.log('🎯 終極版：設定專案點擊事件處理器');
+            console.log('🎯 無快捷鍵版：設定專案點擊事件（事件代理）');
             
-            // 策略 1: 事件代理 (主要策略)
-            const projectList = document.getElementById('projectList');
-            if (projectList) {
-                // 移除現有的事件監聽器
-                const newProjectList = projectList.cloneNode(true);
-                projectList.parentNode.replaceChild(newProjectList, projectList);
-                
-                // 設定新的事件監聽器
-                newProjectList.addEventListener('click', function(e) {
-                    console.log('事件代理點擊:', e.target);
-                    
-                    const item = e.target.closest('.project-item');
-                    if (item) {
-                        const projectId = item.getAttribute('data-project');
-                        console.log('通過事件代理點擊專案:', projectId);
-                        if (projectId && projectId !== app.currentProject) {
-                            loadProject(projectId);
-                        }
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                });
-                
-                // 策略 2: 直接綁定 (備用策略)
-                setTimeout(() => {
-                    document.querySelectorAll('.project-item').forEach((item, index) => {
-                        // 移除現有事件監聽器
-                        const newItem = item.cloneNode(true);
-                        item.parentNode.replaceChild(newItem, item);
-                        
-                        // 多種事件綁定
-                        ['click', 'mousedown', 'touchstart'].forEach(eventType => {
-                            newItem.addEventListener(eventType, function(e) {
-                                const projectId = this.getAttribute('data-project');
-                                console.log(`直接綁定 ${eventType} 事件觸發:`, projectId);
-                                if (projectId && projectId !== app.currentProject) {
-                                    loadProject(projectId);
-                                }
-                                e.preventDefault();
-                                e.stopPropagation();
-                            });
-                        });
-                        
-                        // 策略 3: 強制點擊區域 (CSS + JS)
-                        newItem.style.cursor = 'pointer';
-                        newItem.style.userSelect = 'none';
-                        newItem.style.position = 'relative';
-                        
-                        // 添加隱形覆蓋層確保點擊響應
-                        const overlay = document.createElement('div');
-                        overlay.style.position = 'absolute';
-                        overlay.style.top = '0';
-                        overlay.style.left = '0';
-                        overlay.style.right = '0';
-                        overlay.style.bottom = '0';
-                        overlay.style.zIndex = '2';
-                        overlay.style.cursor = 'pointer';
-                        
-                        overlay.addEventListener('click', function(e) {
-                            const projectId = newItem.getAttribute('data-project');
-                            console.log('覆蓋層點擊觸發:', projectId);
-                            if (projectId && projectId !== app.currentProject) {
-                                loadProject(projectId);
-                            }
-                            e.preventDefault();
-                            e.stopPropagation();
-                        });
-                        
-                        newItem.appendChild(overlay);
-                        
-                        console.log(`已設定專案項目 ${index + 1}: ${newItem.getAttribute('data-project')}`);
-                    });
-                }, 100);
-                
-                console.log('✅ 專案點擊事件處理器設定完成');
-            } else {
+            const list = document.getElementById('projectList');
+            if (!list) {
                 console.error('❌ 找不到 projectList 元素');
+                return;
             }
+
+            const handler = (e) => {
+                const item = e.target.closest('.project-item');
+                if (!item || !list.contains(item)) return;
+
+                const projectId = item.getAttribute('data-project');
+                if (projectId && projectId !== app.currentProject) {
+                    loadProject(projectId);
+                }
+                // 不阻止冒泡，避免影響其他功能
+            };
+
+            list.addEventListener('click', handler, false);
+            list.addEventListener('touchstart', handler, { passive: true });
+
+            // 可鍵盤操作（Enter / Space）
+            list.querySelectorAll('.project-item').forEach(it => {
+                it.setAttribute('tabindex', '0');
+                it.setAttribute('role', 'button');
+            });
+            list.addEventListener('keydown', (e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('project-item')) {
+                    const id = e.target.getAttribute('data-project');
+                    if (id && id !== app.currentProject) loadProject(id);
+                    e.preventDefault();
+                }
+            });
+
+            console.log('✅ 專案點擊事件處理器就緒（無 clone / 無 overlay）');
         }
 
-        // 🎯 終極版：DOMContentLoaded 事件監聽
+        // DOMContentLoaded 事件監聽
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🎯 終極版：DOM 載入完成，開始初始化...');
+            console.log('🎯 無快捷鍵版：DOM 載入完成，開始初始化...');
             console.log('URL 參數:', urlParams);
             console.log('初始專案:', app.currentProject);
             
-            // 初始化資料
             initData();
-            
-            // 🎯 修復：設定專案點擊事件處理器（多重策略）
             setupProjectClickHandlers();
 
-            // 自動上傳設定變更監聽
             document.getElementById('autoUploadToggle').addEventListener('change', function() {
                 const intervalGroup = document.getElementById('autoUploadIntervalGroup');
                 intervalGroup.style.display = this.checked ? 'block' : 'none';
             });
 
-            // 🎯 修復：處理 Gist 下載
             if (urlParams.gist && app.token) {
                 console.log('檢測到 Gist 參數，準備下載...');
                 downloadGist().then(() => {
-                    // 下載完成後，根據 URL 參數載入正確的專案和層級
                     if (urlParams.project) {
                         loadProject(urlParams.project, false);
                         if (urlParams.layer && urlParams.layer !== 'main') {
@@ -2012,11 +1889,9 @@
                 alert('檢測到分享連結，請先設定 GitHub Token 後下載資料');
                 showGitHubModal();
             } else if (urlParams.layer && urlParams.layer !== 'main') {
-                // 沒有 Gist 但有層級參數，直接進入對應層級
                 setTimeout(() => enterLayer(urlParams.layer), 100);
             }
 
-            // 檢查 GitHub Token 和自動上傳設定
             if (app.token) {
                 setSyncStatus('synced', '已連接');
                 if (app.autoUploadEnabled) {
@@ -2024,22 +1899,20 @@
                 }
             }
 
-            // 模態框點擊外部關閉
             document.getElementById('githubModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeGitHubModal();
                 }
             });
             
-            console.log('🎯 終極版：初始化完成，當前專案:', app.currentProject, '當前層級:', app.currentLayer);
+            console.log('🎯 無快捷鍵版：初始化完成，當前專案:', app.currentProject, '當前層級:', app.currentLayer);
             console.log('自動上傳狀態:', app.autoUploadEnabled ? `啟用 (${app.autoUploadIntervalMinutes}分鐘)` : '停用');
         });
 
-        // 🎯 終極版：頁面即將離開時強制儲存
+        // 頁面即將離開時強制儲存
         window.addEventListener('beforeunload', function(e) {
-            console.log('🎯 終極版：頁面即將離開，強制儲存...');
+            console.log('🎯 無快捷鍵版：頁面即將離開，強制儲存...');
             
-            // 強制儲存到所有位置
             if (app.data) {
                 app.data.updatedAt = new Date().toISOString();
                 
@@ -2053,7 +1926,6 @@
                 }
             }
             
-            // 清理計時器
             if (app.autoSaveInterval) {
                 clearInterval(app.autoSaveInterval);
             }
@@ -2062,10 +1934,10 @@
             }
         });
 
-        // 🎯 終極版：頁面可見性變化時儲存
+        // 頁面可見性變化時儲存
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'hidden') {
-                console.log('🎯 終極版：頁面隱藏，執行儲存...');
+                console.log('🎯 無快捷鍵版：頁面隱藏，執行儲存...');
                 saveToStorage(false);
             }
         });
@@ -2094,70 +1966,20 @@
             }
         });
 
-        // 鍵盤快捷鍵
+        // 🎯 無快捷鍵版：移除所有鍵盤快捷鍵事件監聽器
+        // 不再監聽 keydown 事件以避免誤觸快捷鍵
+
+        // 模態框 ESC 鍵關閉（保留基本功能）
         document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey || e.metaKey) {
-                switch(e.key) {
-                    case 's':
-                        e.preventDefault();
-                        saveLocal();
-                        break;
-                    case 'l':
-                        e.preventDefault();
-                        loadLocal();
-                        break;
-                    case 'i':
-                        e.preventDefault();
-                        importJSONFile();
-                        break;
-                    case 'x':
-                        e.preventDefault();
-                        exportJSON();
-                        break;
-                    case 'u':
-                        e.preventDefault();
-                        uploadGist();
-                        break;
-                    case 'd':
-                        e.preventDefault();
-                        downloadGist();
-                        break;
-                    case 'Backspace':
-                        e.preventDefault();
-                        clearAH();
-                        break;
-                    case '1':
-                        e.preventDefault();
-                        setFontSize('small');
-                        break;
-                    case '2':
-                        e.preventDefault();
-                        setFontSize('medium');
-                        break;
-                    case '3':
-                        e.preventDefault();
-                        setFontSize('large');
-                        break;
-                    case '4':
-                        e.preventDefault();
-                        setFontSize('xlarge');
-                        break;
-                }
-            }
-            
             if (e.key === 'Escape') {
                 closeGitHubModal();
-                if (app.currentLayer !== 'main') {
-                    returnToMain();
-                }
             }
         });
 
-        // 🎯 終極版：錯誤處理機制
+        // 錯誤處理機制
         window.addEventListener('error', function(e) {
-            console.error('🎯 終極版：捕獲全域錯誤:', e.error);
+            console.error('🎯 無快捷鍵版：捕獲全域錯誤:', e.error);
             
-            // 嘗試緊急儲存
             if (app.data) {
                 try {
                     sessionStorage.setItem('mandala_emergency_backup', JSON.stringify(app.data));
@@ -2168,22 +1990,13 @@
             }
         });
 
-        // 🎯 終極版：未處理的 Promise 錯誤
+        // 未處理的 Promise 錯誤
         window.addEventListener('unhandledrejection', function(e) {
-            console.error('🎯 終極版：捕獲未處理的 Promise 錯誤:', e.reason);
-            e.preventDefault(); // 防止錯誤阻止程序運行
+            console.error('🎯 無快捷鍵版：捕獲未處理的 Promise 錯誤:', e.reason);
+            e.preventDefault();
         });
 
-        console.log('🎯 終極版曼陀羅系統載入完成 - 具備自動定時上傳 + 完全修復左側選單');
+        console.log('🎯 無快捷鍵版曼陀羅系統載入完成 - 所有鍵盤快捷鍵已移除');
     </script>
 </body>
 </html>
-    <script id="html_badge_script1">
-        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDpV5eVK1DgtyvMEXX9pp6UqLZZXBPBTUgGVpu5ccmpZfE8g59HYA0cl24vO7%2F7J8z9qKq0%2BbxzEDiEs%2FpZ24b9jxOnviiLEMG1xX%2FE4zqI3czIj5mcp5Bj8ZWtIxDZBFFqjPXdMQnlroSs32QzZnKJiGDh8ncVaZWx%2BNbuUykvDE80PfOvB%2BrW2D4coVruWzxC2hc2MoDkvi4qB7ZN3Xw9Slugf8bs6ua4CrdMDsNoCxYux5NFgkOUhTLuE1IfbO03x6eiKu8iRZJBUcXmhfaLrvHD%2FbSfD1uXKH3tkzY4bRUqe5u4hDbNrYbiOr1dHdjKZgtEsY%2FGJqg9ANP8hbWQW94%2FQvzPI5e518WrcU0JnGTxwa6OlFmols%2FmvZz3%2FgFAkH9kYEPw%2BBk43mmatXd%2B%2BLam1UjvTU4IplCMfP9xfCBmf6fWizO06eV%2Fxq2YD4pXyPBmALUEnUvN0ZkFOuTHxQNNHMrSmQNQv3%2B%2BDPLezWVNZnHA1MERexvZnjYpkRdw%3D%3D";
-        window.__genspark_locale = "zh-TW";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDpV5eVK1DgtyvMEXX9pp6UqLZZXBPBTUgGVpu5ccmpZfE8g59HYA0cl24vO7/7J8z9qKq0+bxzEDiEs/pZ24b9jxOnviiLEMG1xX/E4zqI3czIj5mcp5Bj8ZWtIxDZBFFqjPXdMQnlroSs32QzZnKJiGDh8ncVaZWx+NbuUykvDE80PfOvB+rW2D4coVruWzxC2hc2MoDkvi4qB7ZN3Xw9Slugf8bs6ua4CrdMDsNoCxYux5NFgkOUhTLuE1IfbO03x6eiKu8iRZJBUcXmhfaLrvHD/bSfD1uXKH3tkzY4bRUqe5u4hDbNrYbiOr1dHdjKZgtEsY/GJqg9ANP8hbWQW94/QvzPI5e518WrcU0JnGTxwa6OlFmols/mvZz3/gFAkH9kYEPw+Bk43mmatXd++Lam1UjvTU4IplCMfP9xfCBmf6fWizO06eV/xq2YD4pXyPBmALUEnUvN0ZkFOuTHxQNNHMrSmQNQv3++DPLezWVNZnHA1MERexvZnjYpkRdw==";
-    </script>
-    
-    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
-    
